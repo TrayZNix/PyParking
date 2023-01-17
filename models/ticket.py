@@ -1,6 +1,4 @@
-import datetime
 from datetime import datetime as dt
-
 from models.vehiculo import Vehiculo
 
 

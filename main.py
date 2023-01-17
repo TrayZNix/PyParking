@@ -30,6 +30,11 @@ print("Bienvenido!")
 print("...................")
 print("")
 try:
+    clientes = RepoCliente.find_all()
+except FileNotFoundError:
+    clientes = []
+    RepoTicket.save_all(clientes)
+try:
     tickets = RepoTicket.find_all()
 except FileNotFoundError:
     tickets = []
@@ -275,9 +280,45 @@ while True:
                     print("Error al leer")
 
         elif lectura == "3":
-            # Ver abonos temporales
+            # Todo ¿Esto que es?
             pass
         elif lectura == "4":
+            clientes = RepoCliente.find_all()
+            loop = True;
+            while loop:
+                opcion = ""
+                print("........................")
+                print("0. Salir")
+                print("1. Dar de alta")
+                print("2. Modificar abono")
+                print("3. Dar de baja")
+                print("........................")
+                print("Elija una opcion:")
+                opcion = str(input("-> "))
+                if opcion == "0":
+                    loop = False
+                elif opcion == "1":
+                    print("........................")
+                    print("0. Salir")
+                    print("1. Mensual")
+                    print("2. Trimestal")
+                    print("3. Semestral")
+                    print("4. Anual")
+                    print("........................")
+                    print("Elija una opcion:")
+                    opcion = str(input("-> "))
+                    if opcion == "0":
+                        loop = False
+                    else:
+                        pass
+
+                elif opcion == "2":
+                    pass
+                elif opcion == "3":
+                    pass
+                else:
+                    print("Error al leer")
+
             # Modificar, dar de alta o de baja un abono
 
             pass

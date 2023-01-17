@@ -51,7 +51,6 @@ class Espacio:
         self.__tipo_parking = tipo_parking
 
 
-
 class Parking:
     __tarifa_coche = 0
     __tarifa_vrm = 0

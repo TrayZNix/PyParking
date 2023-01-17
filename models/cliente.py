@@ -1,7 +1,7 @@
 from models.vehiculo import Vehiculo
 
 
-class ClienteAbonado:
+class Cliente:
     __nombre = ""
     __dni = ""
     __vehiculo = Vehiculo
