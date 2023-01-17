@@ -4,21 +4,28 @@ import pickle
 import random as r
 import threading as thr
 
+from timedelta import Timedelta
+
+from models.abono import Abono
 from models.cliente import Cliente
 from models.parking import Parking, Espacio
 from models.ticket import Ticket
 from models.vehiculo import Vehiculo
+from repositories.repo_abono import RepoAbono
 from repositories.repo_cliente import RepoCliente
 from repositories.repo_parking import RepoParking
 from repositories.repo_ticket import RepoTicket
 from services.logica_negocio import LogicaNegocio
-
-# repo_parking = RepoParking()
-# repo_ticket = RepoTicket()
-# repo_cliente = RepoCliente()
 tarifa_coche = 0.12
 tarifa_motocicleta = 0.08
 tarifa_vmr = 0.1
+mensualidades = {
+    "Mensual": {"Tiempo": Timedelta(days=31), "precio": 25.00},
+    "Trimestral": {"Tiempo": Timedelta(days=92), "precio": 70.00},
+    "Semestral": {"Tiempo": Timedelta(days=182), "precio": 130.00},
+    "Anual": {"Tiempo": Timedelta(days=365), "precio": 25.00}
+}
+
 def autoguardado():
     RepoParking.save_all(parking)
     RepoTicket.save_all(tickets)
@@ -29,6 +36,11 @@ def autoguardado():
 print("Bienvenido!")
 print("...................")
 print("")
+try:
+    abonos = RepoAbono.find_all()
+except FileNotFoundError:
+    abonos = []
+    RepoAbono.save_all(abonos)
 try:
     clientes = RepoCliente.find_all()
 except FileNotFoundError:
@@ -311,7 +323,7 @@ while True:
                             nombre = str(input("Introduzca su nombre: "))
                             dniIncorrecto = True
                             while dniIncorrecto:
-                                dni = str(input("Introduzca su DNI: "))
+                                dni = str(input("Introduzca su DNI: ")).upper()
                                 if LogicaNegocio.checkear_dni(dni):
                                     dniIncorrecto = False
                                 else:
@@ -342,6 +354,17 @@ while True:
                                                     espacio_asignado.espacio_abonado = True
                                                     print(str(espacio_asignado))
                                                     RepoParking.edit_espacio(espacio_asignado)
+                                                    abonos = RepoAbono().find_all()
+                                                    opciones = {
+                                                        "1": "Mensual",
+                                                        "2": "Trimestral",
+                                                        "3": "Semestral",
+                                                        "4": "Anual"
+                                                    }
+                                                    mensualidad_elegida = opciones.get(tipo)
+                                                    abono = Abono(dni, mensualidades.get(mensualidad_elegida))
+                                                    print(str(abono))
+                                                    abonos.append(abono)
                                                     print("Se ha registrado como abonado. Gracias por su compra")
                                                     lecturaIncorrecta = False
                                                     loop = False
