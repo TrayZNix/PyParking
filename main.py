@@ -1,15 +1,17 @@
 import datetime
 import math
+import pickle
+import random as r
+import threading as thr
+
+from models.cliente import Cliente
 from models.parking import Parking, Espacio
 from models.ticket import Ticket
 from models.vehiculo import Vehiculo
-import random as r
-import pickle
-import threading as thr
-
 from repositories.repo_cliente import RepoCliente
 from repositories.repo_parking import RepoParking
 from repositories.repo_ticket import RepoTicket
+from services.logica_negocio import LogicaNegocio
 
 # repo_parking = RepoParking()
 # repo_ticket = RepoTicket()
@@ -17,8 +19,6 @@ from repositories.repo_ticket import RepoTicket
 tarifa_coche = 0.12
 tarifa_motocicleta = 0.08
 tarifa_vmr = 0.1
-
-
 def autoguardado():
     RepoParking.save_all(parking)
     RepoTicket.save_all(tickets)
@@ -33,7 +33,7 @@ try:
     clientes = RepoCliente.find_all()
 except FileNotFoundError:
     clientes = []
-    RepoTicket.save_all(clientes)
+    RepoCliente.save_all(clientes)
 try:
     tickets = RepoTicket.find_all()
 except FileNotFoundError:
@@ -113,18 +113,12 @@ while True:
             tipo = str(input("-> "))
             if tipo == "0":
                 print("")
-            else:
-                vehiculo = Vehiculo("Toyota", "Avensis",
-                                    ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
+            elif tipo in ["1", "2", "3"]:
+                vehiculo = Vehiculo(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
                 tipo = ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR")
-                print(vehiculo)
                 print("........................")
-                for fila in parking.espacios:
-                    for espacio in fila:
-                        if (not espacio.ocupado) and (espacio.tipo_parking == tipo) and not espacio.espacio_abonado:
-                            espacio_asignado = Espacio(espacio.numero, True, espacio.tipo_parking)
-
-                if 'espacio_asignado' in locals():
+                espacio_asignado = LogicaNegocio.encontrar_espacio_libre(tipo)
+                if espacio_asignado is not None:
                     pin = r.randint(100000, 999999)
                     tickets = []
                     try:
@@ -132,6 +126,7 @@ while True:
                     except:
                         RepoTicket.save_all(tickets)
                     print("La plaza asignada para usted es la plaza: " + str(espacio_asignado.numero))
+                    espacio_asignado.ocupado = True
                     RepoParking.edit_espacio(espacio_asignado)
                     ticket = Ticket(vehiculo, pin, espacio_asignado.numero)
                     tickets.append(ticket)
@@ -145,6 +140,8 @@ while True:
                     input("-> ")
                 else:
                     print("No se te ha podido asignar un sitio")
+            else:
+                print("Error al leer el tipo de coche")
             lectura = "0"
 
         elif lectura == "2":
@@ -298,19 +295,65 @@ while True:
                 if opcion == "0":
                     loop = False
                 elif opcion == "1":
-                    print("........................")
-                    print("0. Salir")
-                    print("1. Mensual")
-                    print("2. Trimestal")
-                    print("3. Semestral")
-                    print("4. Anual")
-                    print("........................")
-                    print("Elija una opcion:")
-                    opcion = str(input("-> "))
-                    if opcion == "0":
-                        loop = False
-                    else:
-                        pass
+                    while loop:
+                        print("........................")
+                        print("0. Salir")
+                        print("1. Mensual")
+                        print("2. Trimestal")
+                        print("3. Semestral")
+                        print("4. Anual")
+                        print("........................")
+                        print("Elija una opcion:")
+                        opcion = str(input("-> "))
+                        if opcion == "0":
+                            loop = False
+                        elif opcion in ["1", "2", "3", "4"]:
+                            nombre = str(input("Introduzca su nombre: "))
+                            dniIncorrecto = True
+                            while dniIncorrecto:
+                                dni = str(input("Introduzca su DNI: "))
+                                if LogicaNegocio.checkear_dni(dni):
+                                    dniIncorrecto = False
+                                else:
+                                    print("DNI incorrecto")
+                                dniIncorrecto = not LogicaNegocio.checkear_dni(dni)
+                            if not dniIncorrecto:
+                                lecturaIncorrecta = True
+                                while lecturaIncorrecta:
+                                    print("........................")
+                                    print("Elija según corresponda con su vehiculo:")
+                                    print("0. Salir")
+                                    print("1. Coche")
+                                    print("2. Motocicleta")
+                                    print("3. Vehiculo para personas con movilidad reducida (VMR)")
+                                    tipo = str(input("-> "))
+                                    if tipo in ["1", "2", "3"]:
+                                        espacio_asignado = LogicaNegocio.encontrar_espacio_libre(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"))
+                                        if espacio_asignado is not None:
+                                            while lecturaIncorrecta:
+                                                matricula = str(input("Introduce la matricula de tu vehiculo: "))
+                                                print("Ha introducido: " + matricula)
+                                                print("¿Es correcto?")
+                                                lectura = str(input("1. Sí. *Otro*. No"))
+                                                if lectura == "1":
+                                                    vehiculo = Vehiculo(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
+                                                    clientes.append(Cliente(nombre, dni, vehiculo))
+                                                    RepoCliente.save_all(clientes)
+                                                    espacio_asignado.espacio_abonado = True
+                                                    print(str(espacio_asignado))
+                                                    RepoParking.edit_espacio(espacio_asignado)
+                                                    print("Se ha registrado como abonado. Gracias por su compra")
+                                                    lecturaIncorrecta = False
+                                                    loop = False
+                                        else:
+                                            print("No se ha encontrado un sitio libre que asignar")
+                                    elif tipo == "0":
+                                        lecturaIncorrecta = False
+                                    else:
+                                        print("Error al leer")
+
+                        else:
+                            print("Error al leer")
 
                 elif opcion == "2":
                     pass

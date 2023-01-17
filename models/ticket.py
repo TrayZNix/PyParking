@@ -47,7 +47,7 @@ class Ticket:
         return self.__total_recaudado
 
     @hora_entrada.setter
-    def set_hora_entrada(self, entrada: datetime):
+    def set_hora_entrada(self, entrada: dt):
         self.__hora_entrada = entrada
 
     @vehiculo.setter

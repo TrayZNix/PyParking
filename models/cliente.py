@@ -7,12 +7,12 @@ class Cliente:
     __vehiculo = Vehiculo
 
     def __init__(self, nombre, dni, vehiculo):
-        self.nombre = nombre
-        self.dni = dni
-        self.vehiculo = vehiculo
+        self.__nombre = nombre
+        self.__dni = dni
+        self.__vehiculo = vehiculo
 
     def __str__(self):
-        return self.nombre + ", con DNI '" + self.dni + "', poseedor del vehiculo: " + str(self.vehiculo)
+        return self.__nombre + ", con DNI '" + self.__dni + "', poseedor del vehiculo: " + str(self.__vehiculo)
 
     @property
     def nombre(self):

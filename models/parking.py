@@ -58,8 +58,6 @@ class Parking:
     __coordenadas = "no-coords"
     __espacios = []
 
-    # espacios = []
-
     def __init__(self, coordenadas, espacios=[]):
         self.__coordenadas = coordenadas
         self.__espacios = espacios
