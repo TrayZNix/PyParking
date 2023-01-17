@@ -1,17 +1,77 @@
+import datetime
 from datetime import datetime as dt
 
-from models.Vehiculo import Vehiculo
+from models.vehiculo import Vehiculo
+
 
 class Ticket:
-    hora_entrada = dt
-    vehiculo = Vehiculo
-    abonado = False
+    __hora_entrada = dt
+    __vehiculo = Vehiculo
+    __abonado = False
+    __plaza = 0
+    __pin_validacion = 0
+    __total_recaudado = 0.0
 
-    def __init__(self, vehiculo):
-        self.vehiculo = vehiculo
-        self.hora_entrada = dt.now()
-        self.abonado = False
+    def __init__(self, vehiculo, pin, plaza):
+        self.__vehiculo = vehiculo
+        self.__hora_entrada = dt.now()
+        self.__abonado = False
+        self.__plaza = plaza
+        self.__pin_validacion = pin
 
     def __str__(self):
-        return "Matricula: " + self.vehiculo.matricula + ". " + "Hora de entrada: " + str(
-            self.hora_entrada) + ". Tarifa: " + str(self.vehiculo.tarifa)+ "€/min"
+        return "Matricula: " + self.__vehiculo.matricula + ". " + "Hora de entrada: " + str(
+            self.__hora_entrada) + ".\nTarifa aplicada: Tarifa de " + str(self.__vehiculo.tipo_vehiculo).lower() + ". " \
+            + "Abonado: " + ("Sí." if self.__abonado else "No.") + (("Recaudado: "+str(self.__total_recaudado)+"€") if self.__abonado else "")
+
+    @property
+    def hora_entrada(self):
+        return self.__hora_entrada
+
+    @property
+    def vehiculo(self):
+        return self.__vehiculo
+
+    @property
+    def abonado(self):
+        return self.__abonado
+
+    @property
+    def plaza(self):
+        return self.__plaza
+
+    @property
+    def pin_validacion(self):
+        return self.__pin_validacion
+
+    @property
+    def total_recaudado(self):
+        return self.__total_recaudado
+
+    @hora_entrada.setter
+    def set_hora_entrada(self, entrada: datetime):
+        self.__hora_entrada = entrada
+
+    @vehiculo.setter
+    def set_vehiculo(self, vehiculo: Vehiculo):
+        self.__vehiculo = vehiculo
+
+    @hora_entrada.setter
+    def set_abonado(self, abonado: bool):
+        self.__abonado = abonado
+
+    @plaza.setter
+    def set_plaza(self, plaza: int):
+        self.__plaza = plaza
+
+    @pin_validacion.setter
+    def set_pin_validacion(self, pin: int):
+        self.__pin_validacion = pin
+
+    @total_recaudado.setter
+    def set_total_recaudado(self, total: float):
+        self.__total_recaudado = total
+
+    def confirmar_pago(self, recaudado):
+        self.__abonado = True
+        self.__total_recaudado = recaudado
