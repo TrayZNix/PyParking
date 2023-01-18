@@ -17,19 +17,23 @@ class Cliente:
     @property
     def nombre(self):
         return self.__nombre
+
     @property
     def dni(self):
         return self.__dni
+
     @property
     def vehiculo(self):
         return self.__vehiculo
 
     @nombre.setter
-    def set_nombre(self, nombre):
+    def nombre(self, nombre):
         self.__nombre = nombre
+
     @dni.setter
-    def set_dni(self, dni):
+    def dni(self, dni):
         self.__dni = dni
+
     @vehiculo.setter
     def set_vehiculo(self, vehiculo):
         self.__vehiculo = vehiculo

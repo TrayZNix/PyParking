@@ -3,32 +3,28 @@ from timedelta import Timedelta
 
 
 class Abono:
-    __dni_cliente_abonado = ""
+    __cliente_abonado = ""
     __fecha_inicio = dt
     __fecha_fin = dt
-    __dinero_abonado = 0
+    __numero_plaza = 0
+    __expirado = False
 
-    def __init__(self, dni, tipo_mensualidad):
-        # mensualidades = {
-        #  "Mensual": {"Tiempo": Timedelta(days=31), "precio": 25.00},
-        #  "Trimestral": {"Tiempo": Timedelta(days=92), "precio": 70.00},
-        #  "Semestral": {"Tiempo": Timedelta(days=182), "precio": 130.00},
-        #  "Anual": {"Tiempo": Timedelta(days=365), "precio": 25.00}
-        #  }
-        self.__dni_cliente_abonado = dni
+    def __init__(self, cliente, tiempo_mensualidad, numero_plaza):
+        self.__cliente_abonado = cliente
         self.__fecha_inicio = dt.now()
-        self.__fecha_fin = dt.now() + tipo_mensualidad["Tiempo"]
-        self.__dinero_abonado = tipo_mensualidad["precio"]
+        self.__fecha_fin = dt.now() + tiempo_mensualidad
+        self.__numero_plaza = numero_plaza
+        self.__expirado = False
 
     def __str__(self):
-        return "\nDNI del cliente abonado: " + self.__dni_cliente_abonado + "\n" \
+        return "Cliente abonado: " + str(self.__cliente_abonado) + "\n" \
                "Inicio abono: " + str(self.__fecha_inicio) + "\n" \
                "Fin abono: " + str(self.__fecha_fin) + "\n" \
-               "Pago realizado: " + str(self.__dinero_abonado)+"€\n"
+               "Plaza asignada: " + str(self.__numero_plaza)
 
     @property
-    def dni_cliente_abonado(self):
-        return self.__dni_cliente_abonado
+    def cliente_abonado(self):
+        return self.__cliente_abonado
 
     @property
     def fecha_inicio(self):
@@ -42,9 +38,17 @@ class Abono:
     def dinero_abonado(self):
         return self.__dinero_abonado
 
-    @dni_cliente_abonado.setter
-    def dni_cliente_abonado(self, dni):
-        self.__dni_cliente_abonado = dni
+    @property
+    def numero_plaza(self):
+        return self.__numero_plaza
+
+    @property
+    def expirado(self):
+        return self.__expirado
+
+    @cliente_abonado.setter
+    def cliente_abonado(self, dni):
+        self.__cliente_abonado = dni
 
     @fecha_fin.setter
     def fecha_fin(self, fecha_fin):
@@ -57,3 +61,11 @@ class Abono:
     @dinero_abonado.setter
     def dinero_abonado(self, dinero):
         self.__dinero_abonado = dinero
+
+    @numero_plaza.setter
+    def numero_plaza(self, numero):
+        self.__numero_plaza = numero
+
+    @expirado.setter
+    def expirado(self, expirado):
+        self.__expirado = expirado

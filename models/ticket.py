@@ -8,7 +8,6 @@ class Ticket:
     __abonado = False
     __plaza = 0
     __pin_validacion = 0
-    __total_recaudado = 0.0
 
     def __init__(self, vehiculo, pin, plaza):
         self.__vehiculo = vehiculo
@@ -42,9 +41,9 @@ class Ticket:
     def pin_validacion(self):
         return self.__pin_validacion
 
-    @property
-    def total_recaudado(self):
-        return self.__total_recaudado
+    @abonado.setter
+    def abonado(self, abonado):
+        self.__abonado = abonado
 
     @hora_entrada.setter
     def set_hora_entrada(self, entrada: dt):
@@ -66,10 +65,6 @@ class Ticket:
     def set_pin_validacion(self, pin: int):
         self.__pin_validacion = pin
 
-    @total_recaudado.setter
-    def set_total_recaudado(self, total: float):
-        self.__total_recaudado = total
 
     def confirmar_pago(self, recaudado):
         self.__abonado = True
-        self.__total_recaudado = recaudado

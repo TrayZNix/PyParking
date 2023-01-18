@@ -7,7 +7,7 @@ class Vehiculo:
         self.__tipo_vehiculo = tipo_vehiculo
 
     def __str__(self):
-        return self.tipo_vehiculo+": " + self.marca + " " + self.modelo + ". Matrícula: " + self.matricula + "."
+        return self.tipo_vehiculo+": Matrícula: " + self.matricula + "."
 
 
     @property
