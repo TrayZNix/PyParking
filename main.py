@@ -248,8 +248,16 @@ while True:
                     matricula = "0"
                     print("No se ha encontrado la matricula")
             lectura = "0"
-        if lectura == "3":
-            pass
+        elif lectura == "3":
+            # El cliente abonado introduce en el sistema la matrícula del vehículo y su DNI. Se supone que un cliente tiene un solo vehículo y un vehículo pertenece a un solo cliente.
+            # El cliente aparca el vehículo en la plaza asignada al abono y el sistema actualiza el estado de la plaza para saber que el vehículo del abonado está en el parking. Asocia siempre el mismo pin para poder retirar el vehículo tantas veces como sea necesario. El PIN se genera al crear el abono del cliente.
+            # De los clientes abonados es necesario saber su DNI, nombre, apellidos, número de tarjeta de crédito, tipo de abono que tienen y su email.
+            print("Introduzca su matrícula: ")
+            matricula = str(input("-> ")).upper()
+            dni = LogicaNegocio.lectura_dni()
+            abonado = ServicioAbono.encontrar_abono_por_dni(dni)
+            if abono is not None:
+                print(str(abono))
         elif lectura == "4":
             pass
         elif lectura == "0":
@@ -346,6 +354,9 @@ while True:
                             loop = False
                         elif opcion in ["1", "2", "3", "4"]:
                             nombre = str(input("Introduzca su nombre: "))
+                            apellidos = str(input("Introduzca sus apellidos: "))
+                            email = str(input("Introduzca su email: "))
+                            tarjeta = str(input("Introduzca su tarjeta de credito, con guiones (0123-4567-8901-2345): "))
                             dni = LogicaNegocio.lectura_dni()
                             if dni is not None:
                                 lectura_incorrecta = True
@@ -377,7 +388,9 @@ while True:
                                                     }
                                                     mensualidad_elegida = opciones.get(opcion)
                                                     mensualidad = mensualidades.get(mensualidad_elegida)
-                                                    abonado = Abono(nombre, dni, mensualidad.get("Tiempo"), espacio_asignado.numero,
+                                                    abonado = Abono(nombre, apellidos, email, tarjeta, dni,
+                                                                    mensualidad_elegida, mensualidad.get("Tiempo"),
+                                                                    espacio_asignado.numero,
                                                                     ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"),
                                                                     matricula, r.randint(100000, 999999))
                                                     cobros = RepoCobro.find_all()
@@ -414,10 +427,19 @@ while True:
                             print("El viejo DNI es" + abono.dni)
                             print("Configure el nuevo DNI")
                             dni = LogicaNegocio.lectura_dni()
-                            abono.dni = dni
                             print("Configure el nuevo nombre")
                             nombre = str(input("Nuevo nombre: "))
+                            print("Configure los nuevos apellidos")
+                            apellidos = str(input("Nuevos apelldios: "))
+                            print("Configure el nuevo email")
+                            email = str(input("Nuevo email: "))
+                            print("Configure su tarjeta de credito, con guiones (0123-4567-7890-1234)")
+                            tarjeta = str(input("Nuevo numero de tarjeta: "))
+                            abono.dni = dni
                             abono.nombre = nombre
+                            abono.apellidos = apellidos
+                            abono.email = email
+                            abono.tarjeta = tarjeta
                             clientes = RepoCliente.find_all()
                             abonados = clientes.get("Abonado")
                             abonados[numero_abono] = abono

@@ -49,3 +49,11 @@ class ServicioAbono:
             # RepoAbono.find_all()
         del abonos[idx]
         # RepoAbono.save_all(abonos)
+
+    @staticmethod
+    def encontrar_abono_por_dni(dni):
+        abonados = RepoCliente.find_all().get("Abonado")
+        for abonado in abonados:
+            if abonado.dni == dni:
+                return abonado
+        return None

@@ -10,12 +10,20 @@ class Abono(Cliente):
     __numero_plaza = 0
     __expirado = False
     __nombre = ""
+    __apellidos = ""
+    __email = ""
+    __tarjeta_credito = ""
+    __tipo_abono = ""
     __dni = ""
     __pin_abono = 0
 
-    def __init__(self, nombre, dni, tiempo_mensualidad, numero_plaza, tipo_vehiculo, matricula, pin_abono):
+    def __init__(self, nombre, apellidos, email, tarjeta_credito, dni, tipo_abono, tiempo_mensualidad, numero_plaza, tipo_vehiculo, matricula, pin_abono):
         super().__init__(tipo_vehiculo, matricula)
         self.__nombre = nombre
+        self.__apellidos = apellidos
+        self.__email == email
+        self.__tarjeta_credito = tarjeta_credito
+        self.__tipo_abono = tipo_abono
         self.__dni = dni
         self.__fecha_inicio = dt.now()
         self.__fecha_fin = dt.now() + tiempo_mensualidad
@@ -35,6 +43,38 @@ class Abono(Cliente):
     @property
     def nombre(self):
         return self.__nombre
+
+    @property
+    def apellidos(self):
+        return self.__apellidos
+
+    @property
+    def email(self):
+        return self.__email
+
+    @property
+    def tarjeta_credito(self):
+        return self.__tarjeta_credito
+
+    @property
+    def tipo_abono(self):
+        return self.__tipo_abono
+
+    @apellidos.setter
+    def apellidos(self, apellidos):
+        self.__apellidos = apellidos
+
+    @email.setter
+    def email(self, email):
+        self.__email = email
+
+    @tarjeta_credito.setter
+    def tarjeta_credito(self, tarjeta):
+        self.__tarjeta_credito = tarjeta
+
+    @tipo_abono.setter
+    def tipo_abono(self, tipo_abono):
+        self.__tipo_abono = tipo_abono
 
     @property
     def dni(self):
