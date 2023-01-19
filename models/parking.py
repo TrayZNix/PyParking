@@ -5,7 +5,7 @@ class Espacio:
     __numero = 0
     __ocupado = False
     __espacio_abonado = False
-    __tipo_parking = "Vehiculo"
+    __tipo_parking = "Cliente"
 
     def __init__(self, numero, ocupado, tipo_parking):
         self.__numero = numero

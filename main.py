@@ -8,11 +8,10 @@ import timedelta
 from timedelta import Timedelta
 
 from models.abono import Abono
-from models.cliente import Cliente
 from models.cobro import Cobro
 from models.parking import Parking, Espacio
 from models.ticket import Ticket
-from models.vehiculo import Vehiculo
+from models.cliente import Cliente
 from repositories.repo_abono import RepoAbono
 from repositories.repo_cobro import RepoCobro
 from repositories.repo_parking import RepoParking
@@ -29,6 +28,7 @@ mensualidades = {
     "Semestral": {"Tiempo": Timedelta(days=182), "Precio": 130.00},
     "Anual": {"Tiempo": Timedelta(days=365), "Precio": 200.00}
 }
+
 
 def autoguardado():
     RepoParking.save_all(parking)
@@ -128,12 +128,12 @@ while True:
             print("0. Salir")
             print("1. Coche")
             print("2. Motocicleta")
-            print("3. Vehiculo para personas con movilidad reducida (VMR)")
+            print("3. Cliente para personas con movilidad reducida (VMR)")
             tipo = str(abs(int(input("-> "))))
             if tipo == "0":
                 print("")
             elif tipo in ["1", "2", "3"]:
-                vehiculo = Vehiculo(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
+                vehiculo = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
                 tipo = ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR")
                 print("........................")
                 espacio_asignado = LogicaNegocio.encontrar_espacio_libre(tipo)
@@ -343,7 +343,7 @@ while True:
                                     print("0. Salir")
                                     print("1. Coche")
                                     print("2. Motocicleta")
-                                    print("3. Vehiculo para personas con movilidad reducida (VMR)")
+                                    print("3. Cliente para personas con movilidad reducida (VMR)")
                                     tipo = str(abs(int(input("-> "))))
                                     if tipo in ["1", "2", "3"]:
                                         espacio_asignado = LogicaNegocio.encontrar_espacio_libre(
@@ -355,8 +355,8 @@ while True:
                                                 print("¿Es correcto?")
                                                 lectura = str(input("1. Sí. *Otro*. No -> "))
                                                 if lectura == "1":
-                                                    vehiculo = Vehiculo(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"),
-                                                                        matricula)
+                                                    vehiculo = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"),
+                                                                       matricula)
                                                     cliente = Cliente(nombre, dni, vehiculo)
                                                     espacio_asignado.espacio_abonado = True
                                                     print(str(espacio_asignado))

@@ -1,39 +1,29 @@
-from models.vehiculo import Vehiculo
-
-
 class Cliente:
-    __nombre = ""
-    __dni = ""
-    __vehiculo = Vehiculo
+    __matricula = "0000XXX"
+    __tipo_vehiculo = "indefinido"
 
-    def __init__(self, nombre, dni, vehiculo):
-        self.__nombre = nombre
-        self.__dni = dni
-        self.__vehiculo = vehiculo
+    def __init__(self, tipo_vehiculo, matricula):
+        self.__matricula = matricula
+        self.__tipo_vehiculo = tipo_vehiculo
 
     def __str__(self):
-        return self.__nombre + ", con DNI '" + self.__dni + "', poseedor del vehiculo: " + str(self.__vehiculo)
+        return self.tipo_vehiculo+": Matrícula: " + self.matricula + "."
+
 
     @property
-    def nombre(self):
-        return self.__nombre
+    def matricula(self):
+        return self.__matricula
+
 
     @property
-    def dni(self):
-        return self.__dni
+    def tipo_vehiculo(self):
+        return self.__tipo_vehiculo
 
-    @property
-    def vehiculo(self):
-        return self.__vehiculo
 
-    @nombre.setter
-    def nombre(self, nombre):
-        self.__nombre = nombre
+    @matricula.setter
+    def matricula(self, matricula):
+        self.__matricula = matricula
 
-    @dni.setter
-    def dni(self, dni):
-        self.__dni = dni
-
-    @vehiculo.setter
-    def set_vehiculo(self, vehiculo):
-        self.__vehiculo = vehiculo
+    @tipo_vehiculo.setter
+    def tipo_vehiculo(self, tipo_vehiculo):
+        self.__tipo_vehiculo = tipo_vehiculo

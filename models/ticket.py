@@ -1,10 +1,10 @@
 from datetime import datetime as dt
-from models.vehiculo import Vehiculo
+from models.cliente import Cliente
 
 
 class Ticket:
     __hora_entrada = dt
-    __vehiculo = Vehiculo
+    __vehiculo = Cliente
     __abonado = False
     __plaza = 0
     __pin_validacion = 0
@@ -50,7 +50,7 @@ class Ticket:
         self.__hora_entrada = entrada
 
     @vehiculo.setter
-    def set_vehiculo(self, vehiculo: Vehiculo):
+    def set_vehiculo(self, vehiculo: Cliente):
         self.__vehiculo = vehiculo
 
     @hora_entrada.setter
