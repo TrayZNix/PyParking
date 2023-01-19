@@ -10,9 +10,8 @@ class Cobro:
     __fecha_cobro = dt
     __cobro_abono = False
 
-    def __init__(self, cliente, cantidad, abono, matricula = None):
-        self.__cliente = ("Anonimo. " if cliente is None else str(cliente)) + \
-                         (("Matricula: " + str(matricula)) if matricula is not None else "")
+    def __init__(self, cliente, cantidad, abono):
+        self.__cliente = cliente
         self.__cantidad_euros = cantidad
         self.__fecha_cobro = datetime.datetime.now()
         self.__cobro_abono = abono

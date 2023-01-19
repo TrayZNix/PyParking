@@ -1,10 +1,11 @@
-from repositories.repo_abono import RepoAbono
+# from repositories.repo_abono import RepoAbono
+from repositories.repo_cliente import RepoCliente
 
 
 class ServicioAbono:
     @staticmethod
     def elegir_abono():
-        abonos = RepoAbono.find_all()
+        abonos = RepoCliente().find_all()["Abonado"]
         if not len(abonos) == 0:
             print("__ __ __ __ Abonos: ")
             indice = 0
@@ -44,6 +45,15 @@ class ServicioAbono:
             return None, None
     @staticmethod
     def eliminar_abono_existente_por_index(idx):
-        abonos = RepoAbono.find_all()
+        abonos = []
+            # RepoAbono.find_all()
         del abonos[idx]
-        RepoAbono.save_all(abonos)
+        # RepoAbono.save_all(abonos)
+
+    @staticmethod
+    def encontrar_abono_por_dni(dni):
+        abonados = RepoCliente.find_all().get("Abonado")
+        for abonado in abonados:
+            if abonado.dni == dni:
+                return abonado
+        return None

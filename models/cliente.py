@@ -9,16 +9,13 @@ class Cliente:
     def __str__(self):
         return self.tipo_vehiculo+": Matrícula: " + self.matricula + "."
 
-
     @property
     def matricula(self):
         return self.__matricula
 
-
     @property
     def tipo_vehiculo(self):
         return self.__tipo_vehiculo
-
 
     @matricula.setter
     def matricula(self, matricula):
@@ -27,3 +24,5 @@ class Cliente:
     @tipo_vehiculo.setter
     def tipo_vehiculo(self, tipo_vehiculo):
         self.__tipo_vehiculo = tipo_vehiculo
+
+

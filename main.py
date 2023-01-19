@@ -11,11 +11,10 @@ from models.abono import Abono
 from models.cobro import Cobro
 from models.parking import Parking, Espacio
 from models.ticket import Ticket
-from models.cliente import Cliente
-from repositories.repo_abono import RepoAbono
 from repositories.repo_cobro import RepoCobro
 from repositories.repo_parking import RepoParking
 from repositories.repo_ticket import RepoTicket
+from repositories.repo_cliente import RepoCliente
 from services.logica_negocio import LogicaNegocio
 from services.servicio_abonos import ServicioAbono
 
@@ -40,12 +39,16 @@ print("Bienvenido!")
 print("...................")
 print("")
 try:
-    abonos = RepoAbono.find_all()
+    clientes = RepoCliente.find_all()
+    for cliente in clientes.get("Cliente"):
+        print(str(cliente))
 except FileNotFoundError:
-    abonos = []
-    RepoAbono.save_all(abonos)
+    clientes = {"Cliente": [], "Abonado": []}
+    RepoCliente.save_all(clientes)
 try:
     cobros = RepoCobro.find_all()
+    for cobro in cobros:
+        print(str(cobro))
 except FileNotFoundError:
     cobros = []
     RepoCobro.save_all(cobros)
@@ -133,7 +136,7 @@ while True:
             if tipo == "0":
                 print("")
             elif tipo in ["1", "2", "3"]:
-                vehiculo = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
+                cliente = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
                 tipo = ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR")
                 print("........................")
                 espacio_asignado = LogicaNegocio.encontrar_espacio_libre(tipo)
@@ -147,9 +150,14 @@ while True:
                     print("La plaza asignada para usted es la plaza: " + str(espacio_asignado.numero))
                     espacio_asignado.ocupado = True
                     RepoParking.edit_espacio(espacio_asignado)
-                    ticket = Ticket(vehiculo, pin, espacio_asignado.numero)
+                    ticket = Ticket(cliente, pin, espacio_asignado.numero)
                     tickets.append(ticket)
                     RepoTicket.save_all(tickets)
+                    clientes = RepoCliente.find_all()
+                    clientes_normal = clientes.get("Cliente")
+                    clientes_normal.append(Cliente(tipo, matricula))
+                    clientes[Cliente] = clientes_normal
+                    RepoCliente.save_all(clientes)
                     print("Su ticket:")
                     print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
                     print(str(ticket))
@@ -172,7 +180,7 @@ while True:
                 tickets = RepoTicket.find_all();
                 matricula_encontrada = False
                 for ticket in tickets:
-                    if ticket.vehiculo.matricula == matricula:
+                    if ticket.cliente.matricula == matricula:
                         ticketAPagar = ticket
                         matricula_encontrada = True
                 if matricula_encontrada:
@@ -192,10 +200,10 @@ while True:
                                     print("Pin incorrecto!")
                                 elif plaza == str(ticket.plaza):
                                     minutos = math.floor((datetime.datetime.now() - ticket.hora_entrada).seconds / 60)
-                                    if ticket.vehiculo.tipo_vehiculo == "Coche":
-                                        if ticket.vehiculo.tipo_vehiculo == "Coche":
+                                    if ticket.cliente.tipo_vehiculo == "Coche":
+                                        if ticket.cliente.tipo_vehiculo == "Coche":
                                             precio = parking.tarifa_coche
-                                        elif ticket.vehiculo.tipo_vehiculo == "Motocicleta":
+                                        elif ticket.cliente.tipo_vehiculo == "Motocicleta":
                                             precio = parking.tarifa_motocicleta
                                         else:
                                             precio = parking.tarifa_vrm
@@ -218,7 +226,11 @@ while True:
                                             RepoTicket.update_ticket(ticket)
                                             plazaObj.ocupado = False
                                             RepoParking.edit_espacio(plazaObj)
-                                            cobros.append(Cobro(None, (minutos * precio), False, matricula = matricula))
+                                            clientes = RepoCliente.find_all().get("Cliente")
+                                            for c in clientes:
+                                                if c.matricula == matricula:
+                                                    cliente = c
+                                            cobros.append(Cobro(Cliente, (minutos * precio), False))
                                             RepoCobro.save_all(cobros)
                                             print("Muchas gracias! Buen viaje!")
                                             pin, plaza, matricula = "0", "0", "0"
@@ -236,8 +248,16 @@ while True:
                     matricula = "0"
                     print("No se ha encontrado la matricula")
             lectura = "0"
-        if lectura == "3":
-            pass
+        elif lectura == "3":
+            # El cliente abonado introduce en el sistema la matrícula del vehículo y su DNI. Se supone que un cliente tiene un solo vehículo y un vehículo pertenece a un solo cliente.
+            # El cliente aparca el vehículo en la plaza asignada al abono y el sistema actualiza el estado de la plaza para saber que el vehículo del abonado está en el parking. Asocia siempre el mismo pin para poder retirar el vehículo tantas veces como sea necesario. El PIN se genera al crear el abono del cliente.
+            # De los clientes abonados es necesario saber su DNI, nombre, apellidos, número de tarjeta de crédito, tipo de abono que tienen y su email.
+            print("Introduzca su matrícula: ")
+            matricula = str(input("-> ")).upper()
+            dni = LogicaNegocio.lectura_dni()
+            abonado = ServicioAbono.encontrar_abono_por_dni(dni)
+            if abono is not None:
+                print(str(abono))
         elif lectura == "4":
             pass
         elif lectura == "0":
@@ -334,6 +354,9 @@ while True:
                             loop = False
                         elif opcion in ["1", "2", "3", "4"]:
                             nombre = str(input("Introduzca su nombre: "))
+                            apellidos = str(input("Introduzca sus apellidos: "))
+                            email = str(input("Introduzca su email: "))
+                            tarjeta = str(input("Introduzca su tarjeta de credito, con guiones (0123-4567-8901-2345): "))
                             dni = LogicaNegocio.lectura_dni()
                             if dni is not None:
                                 lectura_incorrecta = True
@@ -355,13 +378,8 @@ while True:
                                                 print("¿Es correcto?")
                                                 lectura = str(input("1. Sí. *Otro*. No -> "))
                                                 if lectura == "1":
-                                                    vehiculo = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"),
-                                                                       matricula)
-                                                    cliente = Cliente(nombre, dni, vehiculo)
                                                     espacio_asignado.espacio_abonado = True
-                                                    print(str(espacio_asignado))
                                                     RepoParking.edit_espacio(espacio_asignado)
-                                                    abonos = RepoAbono().find_all()
                                                     opciones = {
                                                         "1": "Mensual",
                                                         "2": "Trimestral",
@@ -370,17 +388,20 @@ while True:
                                                     }
                                                     mensualidad_elegida = opciones.get(opcion)
                                                     mensualidad = mensualidades.get(mensualidad_elegida)
-                                                    abono = Abono(cliente, mensualidad.get("Tiempo"),
-                                                                  espacio_asignado.numero)
+                                                    abonado = Abono(nombre, apellidos, email, tarjeta, dni,
+                                                                    mensualidad_elegida, mensualidad.get("Tiempo"),
+                                                                    espacio_asignado.numero,
+                                                                    ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"),
+                                                                    matricula, r.randint(100000, 999999))
                                                     cobros = RepoCobro.find_all()
-                                                    print(str(mensualidad))
-                                                    cobros.append(Cobro(cliente, mensualidad.get("Precio"), True))
+                                                    cobros.append(Cobro(abonado, mensualidad.get("Precio"), True))
                                                     RepoCobro.save_all(cobros)
                                                     print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
-                                                    print(str(abono))
+                                                    print(str(abonado))
                                                     print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
-                                                    abonos.append(abono)
-                                                    RepoAbono.save_all(abonos)
+                                                    clientes = RepoCliente.find_all()
+                                                    clientes.get("Abonado").append(abonado)
+                                                    RepoCliente.save_all(clientes)
                                                     print("Se ha registrado como abonado. Gracias por su compra")
                                                     lectura_incorrecta = False
                                                     loop = False
@@ -402,18 +423,28 @@ while True:
                         print("1. Datos del cliente")
                         print("2. Fecha de fin del abono")
                         decision = str(abs(int(input("-> "))))
-                        cliente = abono.cliente_abonado
                         if decision == "1":
-                            print("El viejo DNI es" + cliente.dni)
+                            print("El viejo DNI es" + abono.dni)
                             print("Configure el nuevo DNI")
                             dni = LogicaNegocio.lectura_dni()
-                            cliente.dni = dni
                             print("Configure el nuevo nombre")
                             nombre = str(input("Nuevo nombre: "))
-                            cliente.nombre = nombre
-                            abono.cliente_abonado = cliente
-                            abonos[numero_abono] = abono
-                            RepoAbono.save_all(abonos)
+                            print("Configure los nuevos apellidos")
+                            apellidos = str(input("Nuevos apelldios: "))
+                            print("Configure el nuevo email")
+                            email = str(input("Nuevo email: "))
+                            print("Configure su tarjeta de credito, con guiones (0123-4567-7890-1234)")
+                            tarjeta = str(input("Nuevo numero de tarjeta: "))
+                            abono.dni = dni
+                            abono.nombre = nombre
+                            abono.apellidos = apellidos
+                            abono.email = email
+                            abono.tarjeta = tarjeta
+                            clientes = RepoCliente.find_all()
+                            abonados = clientes.get("Abonado")
+                            abonados[numero_abono] = abono
+                            clientes["Abonado"] = abonados
+                            RepoCliente.save_all(clientes)
                             print("Abono modificado correctamente!")
                             loop_abono = False
                         elif decision == "2":
@@ -434,13 +465,16 @@ while True:
                                     mensualidad = mensualidades.get(list(mensualidades.keys())[int(eleccion) - 1])
                                     abono.fecha_fin = datetime.datetime.now() + mensualidad.get("Tiempo")
                                     cobros = RepoCobro.find_all()
-                                    cobros.append(Cobro(cliente, mensualidad.get("Precio"), True))
+                                    cobros.append(Cobro(abono, mensualidad.get("Precio"), True))
                                     RepoCobro.save_all(cobros)
                                     print("Se ha actualizado el abono: -- -- -- -- -- -- -- -- -- --")
                                     print(str(abono))
                                     print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
-                                    abonos[numero_abono] = abono
-                                    RepoAbono.save_all(abonos)
+                                    clientes = RepoCliente.find_all()
+                                    abonados = clientes.get("Abonado")
+                                    abonados[numero_abono] = abono
+                                    clientes["Abonado"] = abonados
+                                    RepoCliente.save_all(clientes)
                                     eleccion_mensualidad = False
                                     loop_abono = False
                                 except IndexError:
@@ -501,9 +535,9 @@ while True:
                     except ValueError:
                         opcion = ""
                     if opcion != "":
-                        abonos = RepoAbono.find_all()
+                        abonados = RepoCliente.find_all().get("Abonado")
                         abonos_del_mes_elegido = []
-                        for abono in abonos:
+                        for abono in abonados:
                             if str(abono.fecha_fin.month) == opcion:
                                 abonos_del_mes_elegido.append(abono)
                         if len(abonos_del_mes_elegido) == 0:
@@ -516,9 +550,9 @@ while True:
                             print("-- -- -- -- -- -- -- -- -- -- -- -- -- ")
 
                 elif opcion == "2":
-                    abonos = RepoAbono.find_all()
+                    abonados = RepoCliente.find_all().get("Abonado")
                     abonos_prox_diez_dias = []
-                    for abono in abonos:
+                    for abono in abonados:
                         if abono.fecha_fin <= (datetime.datetime.now() + timedelta.Timedelta(days=10)):
                             abonos_prox_diez_dias.append(abono)
                     if len(abonos_prox_diez_dias) == 0:
