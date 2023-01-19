@@ -1,13 +1,16 @@
 import datetime
 import math
+import os
 import pickle
 import random as r
+import sys
 import threading as thr
 
 import timedelta
 from timedelta import Timedelta
 
 from models.abono import Abono
+from models.cliente import Cliente
 from models.cobro import Cobro
 from models.parking import Parking, Espacio
 from models.ticket import Ticket
@@ -17,6 +20,7 @@ from repositories.repo_ticket import RepoTicket
 from repositories.repo_cliente import RepoCliente
 from services.logica_negocio import LogicaNegocio
 from services.servicio_abonos import ServicioAbono
+from services.servicio_lectura import Lectura
 
 tarifa_coche = 0.12
 tarifa_motocicleta = 0.08
@@ -38,17 +42,26 @@ def autoguardado():
 print("Bienvenido!")
 print("...................")
 print("")
+# import time
+# for x in range(2):
+#     print("Cargando.", end='')
+#     time.sleep(1)
+#     print("Cargando.", end="\r")
+#     print("Cargando..", end='')
+#     time.sleep(1)
+#     print("Cargando..", end="\r")
+#     print("Cargando...", end='')
+#     time.sleep(1)
+#     print("Cargando...", end="\r")
+# print("\r")
+os.system("cls")
 try:
     clientes = RepoCliente.find_all()
-    for cliente in clientes.get("Cliente"):
-        print(str(cliente))
 except FileNotFoundError:
     clientes = {"Cliente": [], "Abonado": []}
     RepoCliente.save_all(clientes)
 try:
     cobros = RepoCobro.find_all()
-    for cobro in cobros:
-        print(str(cobro))
 except FileNotFoundError:
     cobros = []
     RepoCobro.save_all(cobros)
@@ -99,6 +112,7 @@ while True:
     except ValueError:
         lectura = "0"
     if lectura == "1":
+        # os.system("cls")
         print("__ __ __ __ __")
         print("0. Salir")
         print("1. Depositar vehiculo")
@@ -124,51 +138,52 @@ while True:
             print("Motos: " + str(espacios_libres.get("motos")))
             print("VMR: " + str(espacios_libres.get("vrm")))
             print("........................")
-            print("Introduzca su matrícula: ")
-            matricula = str(input("-> ")).upper()
-            print("........................")
-            print("Elija según corresponda con su vehiculo:")
-            print("0. Salir")
-            print("1. Coche")
-            print("2. Motocicleta")
-            print("3. Cliente para personas con movilidad reducida (VMR)")
-            tipo = str(abs(int(input("-> "))))
-            if tipo == "0":
-                print("")
-            elif tipo in ["1", "2", "3"]:
-                cliente = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
-                tipo = ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR")
+            print("Introduzca su matrícula, o 0 para salir: ")
+            matricula = Lectura.leer_matricula()
+            if matricula is not None:
                 print("........................")
-                espacio_asignado = LogicaNegocio.encontrar_espacio_libre(tipo)
-                if espacio_asignado is not None:
-                    pin = r.randint(100000, 999999)
-                    tickets = []
-                    try:
-                        tickets = RepoTicket.find_all()
-                    except:
+                print("Elija según corresponda con su vehiculo:")
+                print("0. Salir")
+                print("1. Coche")
+                print("2. Motocicleta")
+                print("3. Cliente para personas con movilidad reducida (VMR)")
+                tipo = str(abs(int(input("-> "))))
+                if tipo == "0":
+                    print("")
+                elif tipo in ["1", "2", "3"]:
+                    cliente = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
+                    tipo = ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR")
+                    print("........................")
+                    espacio_asignado = LogicaNegocio.encontrar_espacio_libre(tipo)
+                    if espacio_asignado is not None:
+                        pin = r.randint(100000, 999999)
+                        tickets = []
+                        try:
+                            tickets = RepoTicket.find_all()
+                        except:
+                            RepoTicket.save_all(tickets)
+                        print("La plaza asignada para usted es la plaza: " + str(espacio_asignado.numero))
+                        espacio_asignado.ocupado = True
+                        RepoParking.edit_espacio(espacio_asignado)
+                        ticket = Ticket(cliente, pin, espacio_asignado.numero)
+                        tickets.append(ticket)
                         RepoTicket.save_all(tickets)
-                    print("La plaza asignada para usted es la plaza: " + str(espacio_asignado.numero))
-                    espacio_asignado.ocupado = True
-                    RepoParking.edit_espacio(espacio_asignado)
-                    ticket = Ticket(cliente, pin, espacio_asignado.numero)
-                    tickets.append(ticket)
-                    RepoTicket.save_all(tickets)
-                    clientes = RepoCliente.find_all()
-                    clientes_normal = clientes.get("Cliente")
-                    clientes_normal.append(Cliente(tipo, matricula))
-                    clientes[Cliente] = clientes_normal
-                    RepoCliente.save_all(clientes)
-                    print("Su ticket:")
-                    print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-                    print(str(ticket))
-                    print("Su pin es: " + str(ticket.pin_validacion))
-                    print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-                    print("Recoja su ticket (Pulse enter)")
-                    input("-> ")
+                        clientes = RepoCliente.find_all()
+                        clientes_normal = clientes.get("Cliente")
+                        clientes_normal.append(Cliente(tipo, matricula))
+                        clientes[Cliente] = clientes_normal
+                        RepoCliente.save_all(clientes)
+                        print("Su ticket:")
+                        print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+                        print(str(ticket))
+                        print("Su pin es: " + str(ticket.pin_validacion))
+                        print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
+                        print("Recoja su ticket (Pulse enter)")
+                        input("-> ")
+                    else:
+                        print("No se te ha podido asignar un sitio")
                 else:
-                    print("No se te ha podido asignar un sitio")
-            else:
-                print("Error al leer el tipo de coche")
+                    print("Error al leer el tipo de coche")
             lectura = "0"
 
         elif lectura == "2":
@@ -192,56 +207,57 @@ while True:
                         if plaza != str(ticket.plaza):
                             print("Plaza incorrecta!")
                         elif plaza == str(ticket.plaza):
-                            pin = ""
-                            while pin != "0":
-                                print("Introduzca el PIN de validación")
-                                pin = str(input("-> "))
-                                if pin != str(ticket.pin_validacion):
-                                    print("Pin incorrecto!")
-                                elif plaza == str(ticket.plaza):
-                                    minutos = math.floor((datetime.datetime.now() - ticket.hora_entrada).seconds / 60)
+                            pin_correcto = Lectura.leer_pin(ticket.pin_validacion)
+                            if pin_correcto & (plaza == str(ticket.plaza)):
+                                minutos = math.floor((datetime.datetime.now() - ticket.hora_entrada).seconds / 60)
+                                if ticket.cliente.tipo_vehiculo == "Coche":
                                     if ticket.cliente.tipo_vehiculo == "Coche":
-                                        if ticket.cliente.tipo_vehiculo == "Coche":
-                                            precio = parking.tarifa_coche
-                                        elif ticket.cliente.tipo_vehiculo == "Motocicleta":
-                                            precio = parking.tarifa_motocicleta
-                                        else:
-                                            precio = parking.tarifa_vrm
-                                            precio = float(precio)
-                                        plazaObj = RepoParking.espacio_por_numero(int(plaza))
-                                    print("Ha estado " + str(minutos) + " minutos en el parking")
-                                    print("A " + str(precio) + "€/minuto, debe un total de: " + str(
-                                        minutos * precio) + "€")
-                                    sinRespuesta = True
-                                    while sinRespuesta:
-                                        print("...................................")
-                                        print("Escriba su decisión")
-                                        print("0. Salir")
-                                        print("1. Pagar")
-                                        print("...................................")
-                                        decision = str(abs(int(input("-> "))))
-                                        if decision == "1":
-                                            sinRespuesta = False
-                                            ticket.abonado = True
-                                            RepoTicket.update_ticket(ticket)
-                                            plazaObj.ocupado = False
-                                            RepoParking.edit_espacio(plazaObj)
-                                            clientes = RepoCliente.find_all().get("Cliente")
-                                            for c in clientes:
-                                                if c.matricula == matricula:
-                                                    cliente = c
-                                            cobros.append(Cobro(Cliente, (minutos * precio), False))
-                                            RepoCobro.save_all(cobros)
-                                            print("Muchas gracias! Buen viaje!")
-                                            pin, plaza, matricula = "0", "0", "0"
-                                        elif decision == "0":
-                                            sinRespuesta = False
-                                            pin = "0"
-                                        else:
-                                            print("Error al leer")
-                                else:
-                                    pin = "0"
-                                    plaza = "0"
+                                        precio = parking.tarifa_coche
+                                    elif ticket.cliente.tipo_vehiculo == "Motocicleta":
+                                        precio = parking.tarifa_motocicleta
+                                    else:
+                                        precio = parking.tarifa_vrm
+                                        precio = float(precio)
+                                    plazaObj = RepoParking.espacio_por_numero(int(plaza))
+                                print("Ha estado " + str(minutos) + " minutos en el parking")
+                                print("A " + str(precio) + "€/minuto, debe un total de: " + str(
+                                    minutos * precio) + "€")
+                                sinRespuesta = True
+                                while sinRespuesta:
+                                    print("...................................")
+                                    print("Escriba su decisión")
+                                    print("0. Salir")
+                                    print("1. Pagar")
+                                    print("...................................")
+                                    decision = str(abs(int(input("-> "))))
+                                    if decision == "1":
+                                        sinRespuesta = False
+                                        ticket.abonado = True
+                                        RepoTicket.update_ticket(ticket)
+                                        plazaObj.ocupado = False
+                                        RepoParking.edit_espacio(plazaObj)
+                                        clientes = RepoCliente.find_all()
+                                        clientes_normal = clientes.get("Cliente")
+                                        indice = 0
+                                        for idx, c in enumerate(clientes_normal):
+                                            if c.matricula == matricula:
+                                                cliente = c
+                                                indice = idx
+                                        del clientes_normal[indice]
+                                        clientes["Cliente"] = clientes_normal
+                                        RepoCliente.save_all(clientes)
+                                        cobros.append(Cobro(cliente, (minutos * precio), False))
+                                        RepoCobro.save_all(cobros)
+                                        print("Muchas gracias! Buen viaje!")
+                                        pin, plaza, matricula = "0", "0", "0"
+                                    elif decision == "0":
+                                        sinRespuesta = False
+                                        pin = "0"
+                                    else:
+                                        print("Error al leer")
+                            else:
+                                pin = "0"
+                                plaza = "0"
                         else:
                             plaza = "0"
                 else:
@@ -249,17 +265,44 @@ while True:
                     print("No se ha encontrado la matricula")
             lectura = "0"
         elif lectura == "3":
-            # El cliente abonado introduce en el sistema la matrícula del vehículo y su DNI. Se supone que un cliente tiene un solo vehículo y un vehículo pertenece a un solo cliente.
-            # El cliente aparca el vehículo en la plaza asignada al abono y el sistema actualiza el estado de la plaza para saber que el vehículo del abonado está en el parking. Asocia siempre el mismo pin para poder retirar el vehículo tantas veces como sea necesario. El PIN se genera al crear el abono del cliente.
-            # De los clientes abonados es necesario saber su DNI, nombre, apellidos, número de tarjeta de crédito, tipo de abono que tienen y su email.
             print("Introduzca su matrícula: ")
             matricula = str(input("-> ")).upper()
             dni = LogicaNegocio.lectura_dni()
-            abonado = ServicioAbono.encontrar_abono_por_dni(dni)
-            if abono is not None:
-                print(str(abono))
+            abonado = ServicioAbono.encontrar_abono_por_dni(dni, matricula)
+            if abonado is not None:
+                desafio = Lectura.leer_pin(abonado.pin_abono)
+                if desafio:
+                    espacio = RepoParking.espacio_por_numero(abonado.numero_plaza)
+                    espacio.ocupado = True
+                    RepoParking.edit_espacio(espacio)
+                    print("¡Bienvenido al parking!")
+            else:
+                print("No se ha encontrado ningun abono con los datos introducidos anteriormente")
         elif lectura == "4":
-            pass
+            print("Introduzca la matrícula de su vehiculo: ")
+            matricula = str(input("-> "))
+            dni = LogicaNegocio.lectura_dni()
+            if dni is not None:
+                abono = ServicioAbono.encontrar_abono_por_dni(dni, matricula)
+                error = True
+                while error:
+                    try:
+                        print("Introduzca la plaza en la que se encuentra su vehiculo: ")
+                        numero = int(input("-> "))
+                        espacio = RepoParking.espacio_por_numero(numero)
+                        print(str(espacio))
+                    except ValueError:
+                        print("Ha introducido un valor erroneo")
+                    except IndexError:
+                        print("Ese sitio no existe")
+                    if espacio is not None:
+                        error = False
+                        print("Introduzca el pin desafio: ")
+                        desafio = Lectura.leer_pin(abono.pin_abono)
+                        if desafio:
+                            espacio.ocupado = False
+                            RepoParking.edit_espacio(espacio)
+                            print("¡Hasta pronto!")
         elif lectura == "0":
             print("")
         else:
@@ -305,8 +348,8 @@ while True:
                             if len(cobros_en_fecha) != 0:
                                 for cobro in cobros_en_fecha:
                                     print("-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.")
-                                print(str(cobro))
-                                total_recaudado += cobro.cantidad_euros
+                                    print(str(cobro))
+                                    total_recaudado += cobro.cantidad_euros
                                 print("-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.")
                                 print("Total recaudado entre las fechas introducidas:")
                                 print("{:.2f}".format(total_recaudado) + "€")
@@ -319,12 +362,25 @@ while True:
                 except ValueError:
                     print("Error al leer")
         elif lectura == "3":
-            # abonos = RepoAbono.find_all()
-            # clientes_abonados = {}
-            # for abono in abonos:
-            #     if not abono.cliente_abonado.dni in clientes_abonados:
-
-            pass
+            cobros = RepoCobro.find_all()
+            abonos = RepoCliente.find_all().get("Abonado")
+            cobros_abonos_no_activos = []
+            total_recaudado = 0
+            for cobro in cobros:
+                total_recaudado += cobro.cantidad_euros
+                if ServicioAbono.checkear_abono_activo(cobro.cliente.dni):
+                    print("->> ---------------------------------")
+                    print(str(cobro))
+                    print("-------------------------------------")
+                else:
+                    cobros_abonos_no_activos.append(cobro)
+            if len(cobros_abonos_no_activos) != 0:
+                print(" ================== Los siguientes cobros son de abonos que están dados de baja:")
+                for cobro in cobros_abonos_no_activos:
+                    print("->> ---------------------------------")
+                    print(str(cobro))
+                    print("-------------------------------------")
+            print("Se ha recaudado un total de: " + str(total_recaudado) + "€")
         elif lectura == "4":
             loop = True;
             while loop:
@@ -373,7 +429,8 @@ while True:
                                             ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"))
                                         if espacio_asignado is not None:
                                             while lectura_incorrecta:
-                                                matricula = str(input("Introduce la matricula de tu vehiculo: ")).upper()
+                                                print("Introduzca la matrícula de su vehiculo")
+                                                matricula = Lectura.leer_matricula()
                                                 print("Ha introducido: " + matricula)
                                                 print("¿Es correcto?")
                                                 lectura = str(input("1. Sí. *Otro*. No -> "))
@@ -507,8 +564,6 @@ while True:
                         pass
                 else:
                     print("Error al leer")
-
-            # Modificar, dar de alta o de baja un abono
 
             pass
         elif lectura == "5":

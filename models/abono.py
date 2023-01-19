@@ -36,8 +36,8 @@ class Abono(Cliente):
                "Inicio abono: " + str(self.__fecha_inicio) + "\n" \
                "Fin abono: " + str(self.__fecha_fin) + "\n" \
                "Plaza asignada: " + str(self.__numero_plaza) + "\n" \
-                "Vehiculo: " + super(Abono, self).__str__() + "\n " \
-                "Su PIN es: "+ str(self.__pin_abono)
+                "Vehiculo: " + super(Abono, self).__str__() + "\n" \
+                "Su PIN es: " + str(self.__pin_abono)
 
 
     @property
@@ -75,6 +75,14 @@ class Abono(Cliente):
     @tipo_abono.setter
     def tipo_abono(self, tipo_abono):
         self.__tipo_abono = tipo_abono
+
+    @property
+    def pin_abono(self):
+        return self.__pin_abono
+
+    @pin_abono.setter
+    def pin_abono(self, pin):
+        self.__pin_abono = pin
 
     @property
     def dni(self):

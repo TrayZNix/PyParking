@@ -45,15 +45,24 @@ class ServicioAbono:
             return None, None
     @staticmethod
     def eliminar_abono_existente_por_index(idx):
-        abonos = []
-            # RepoAbono.find_all()
+        clientes = RepoCliente.find_all()
+        abonos = clientes.get("Abonado")
         del abonos[idx]
-        # RepoAbono.save_all(abonos)
+        clientes["Abonado"] = abonos
+        RepoCliente.save_all(clientes)
 
     @staticmethod
-    def encontrar_abono_por_dni(dni):
+    def encontrar_abono_por_dni(dni, matricula):
         abonados = RepoCliente.find_all().get("Abonado")
         for abonado in abonados:
-            if abonado.dni == dni:
+            if (abonado.dni == dni) & (abonado.matricula == matricula):
                 return abonado
         return None
+
+    @staticmethod
+    def checkear_abono_activo(dni):
+        abonados = RepoCliente.find_all().get("Abonado")
+        for abono in abonados:
+            if abono.dni == dni:
+                return True
+        return False
