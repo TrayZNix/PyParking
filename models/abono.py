@@ -1,26 +1,44 @@
 from datetime import datetime as dt
 from timedelta import Timedelta
 
+from models.cliente import Cliente
 
-class Abono:
-    __cliente_abonado = ""
+
+class Abono(Cliente):
     __fecha_inicio = dt
     __fecha_fin = dt
     __numero_plaza = 0
     __expirado = False
+    __nombre = ""
+    __dni = ""
+    __pin_abono = 0
 
-    def __init__(self, cliente, tiempo_mensualidad, numero_plaza):
-        self.__cliente_abonado = cliente
+    def __init__(self, nombre, dni, tiempo_mensualidad, numero_plaza, tipo_vehiculo, matricula, pin_abono):
+        super().__init__(tipo_vehiculo, matricula)
+        self.__nombre = nombre
+        self.__dni = dni
         self.__fecha_inicio = dt.now()
         self.__fecha_fin = dt.now() + tiempo_mensualidad
         self.__numero_plaza = numero_plaza
         self.__expirado = False
+        self.__pin_abono = pin_abono
 
     def __str__(self):
-        return "Cliente abonado: " + str(self.__cliente_abonado) + "\n" \
+        return "Cliente abonado: " + str(self.__nombre) + ". DNI: "+str(self.__dni) +"\n" \
                "Inicio abono: " + str(self.__fecha_inicio) + "\n" \
                "Fin abono: " + str(self.__fecha_fin) + "\n" \
-               "Plaza asignada: " + str(self.__numero_plaza)
+               "Plaza asignada: " + str(self.__numero_plaza) + "\n" \
+                "Vehiculo: " + super(Abono, self).__str__() + "\n " \
+                "Su PIN es: "+ str(self.__pin_abono)
+
+
+    @property
+    def nombre(self):
+        return self.__nombre
+
+    @property
+    def dni(self):
+        return self.__dni
 
     @property
     def cliente_abonado(self):
@@ -69,3 +87,11 @@ class Abono:
     @expirado.setter
     def expirado(self, expirado):
         self.__expirado = expirado
+
+    @nombre.setter
+    def nombre(self, nombre):
+        self.__nombre = nombre
+
+    @dni.setter
+    def dni(self, dni):
+        self.__dni = dni
