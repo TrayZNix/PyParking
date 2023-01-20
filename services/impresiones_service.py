@@ -1,10 +1,6 @@
-import os
-
-
 class ImpresionesService:
     @staticmethod
     def main_menu():
-        os.system("cls")
         print("Elija su rol: ")
         print("-------------------------------------------------------------------")
         print("1. Cliente")
@@ -12,7 +8,6 @@ class ImpresionesService:
 
     @staticmethod
     def submenu_a():
-        os.system("cls")
         print("__ __ __ __ __")
         print("0. Salir")
         print("1. Depositar vehiculo")
@@ -22,7 +17,6 @@ class ImpresionesService:
 
     @staticmethod
     def submenu_b():
-        os.system("cls")
         print("__ __ __ __ __")
         print("0. Atras")
         print("1. Estado del parking")
@@ -33,7 +27,6 @@ class ImpresionesService:
         print("6. Ver todos los tickets")
     @staticmethod
     def print_espacios_libres(espacios_libres):
-        os.system("cls")
         print("Espacios libres:")
         print("........................")
         print("Coches: " + str(espacios_libres.get("coches")))

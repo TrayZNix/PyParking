@@ -3,12 +3,9 @@ import math
 import os
 import pickle
 import random as r
-import sys
 import threading as thr
-
 import timedelta
 from timedelta import Timedelta
-
 from models.abono import Abono
 from models.cliente import Cliente
 from models.cobro import Cobro
@@ -195,16 +192,16 @@ while True:
                         while plaza != "0":
                             print("Introduzca la plaza en la que se encuentra su vehiculo, o 0 para salir: ")
                             plaza = str(input("-> "))
-                            if plaza != str(ticket.plaza):
+                            if plaza != str(ticketAPagar.plaza):
                                 print("Plaza incorrecta!")
-                            elif plaza == str(ticket.plaza):
-                                pin_correcto = Lectura.leer_pin(ticket.pin_validacion)
-                                if pin_correcto & (plaza == str(ticket.plaza)):
-                                    minutos = math.floor((datetime.datetime.now() - ticket.hora_entrada).seconds / 60)
-                                    if ticket.cliente.tipo_vehiculo == "Coche":
-                                        if ticket.cliente.tipo_vehiculo == "Coche":
+                            elif plaza == str(ticketAPagar.plaza):
+                                pin_correcto = Lectura.leer_pin(ticketAPagar.pin_validacion)
+                                if pin_correcto & (plaza == str(ticketAPagar.plaza)):
+                                    minutos = math.floor((datetime.datetime.now() - ticketAPagar.hora_entrada).seconds / 60)
+                                    if ticketAPagar.cliente.tipo_vehiculo == "Coche":
+                                        if ticketAPagar.cliente.tipo_vehiculo == "Coche":
                                             precio = parking.tarifa_coche
-                                        elif ticket.cliente.tipo_vehiculo == "Motocicleta":
+                                        elif ticketAPagar.cliente.tipo_vehiculo == "Motocicleta":
                                             precio = parking.tarifa_motocicleta
                                         else:
                                             precio = parking.tarifa_vrm
@@ -219,8 +216,8 @@ while True:
                                         decision = str(abs(int(input("-> "))))
                                         if decision == "1":
                                             sinRespuesta = False
-                                            ticket.abonado = True
-                                            RepoTicket.update_ticket(ticket)
+                                            ticketAPagar.abonado = True
+                                            RepoTicket.update_ticket(ticketAPagar)
                                             plazaObj.ocupado = False
                                             ServicioParking.edit_espacio(plazaObj)
                                             clientes = RepoCliente.find_all()
@@ -261,7 +258,6 @@ while True:
                     if desafio:
                         espacio = ServicioParking().espacio_por_numero(abonado.numero_plaza)
                         espacio.ocupado = True
-                        print(espacio)
                         ServicioParking.edit_espacio(espacio)
                         print("¡Bienvenido al parking!")
                 else:
@@ -278,7 +274,6 @@ while True:
                             print("Introduzca la plaza en la que se encuentra su vehiculo: ")
                             numero = int(input("-> "))
                             espacio = ServicioParking().espacio_por_numero(numero)
-                            print(str(espacio))
                         except ValueError:
                             print("Ha introducido un valor erroneo")
                         except IndexError:
@@ -298,7 +293,11 @@ while True:
 
     elif lectura == "2":
         ImpresionesService.submenu_b()
-        lectura = str(abs(int(input("-> "))))
+        try:
+            lectura = "0"
+            lectura = str(abs(int(input("-> "))))
+        except ValueError:
+            print("Error de lectura")
         print()
         if lectura == "0":
             pass
@@ -363,13 +362,22 @@ while True:
             while loop:
                 opcion = ""
                 ImpresionesService().submenu_b_p4()
-                opcion = str(abs(int(input("-> "))))
+                try:
+                    opcion = "0"
+                    opcion = str(abs(int(input("-> "))))
+                except ValueError:
+                    print("Error al leer")
                 if opcion == "0":
+
                     loop = False
                 elif opcion == "1":
                     while loop:
                         ImpresionesService().tipo_mensualidad()
-                        opcion = str(abs(int(input("-> "))))
+                        try:
+                            opcion = "0"
+                            opcion = str(abs(int(input("-> "))))
+                        except ValueError:
+                            print("Error al leer")
                         if opcion == "0":
                             loop = False
                         elif opcion in ["1", "2", "3", "4"]:
@@ -379,15 +387,27 @@ while True:
                                 if abono is not None:
                                     print("El DNI introducido ya está asociado a un abono")
                                 if dni is not None and abono is None:
-                                    nombre = str(input("Introduzca su nombre: "))
-                                    apellidos = str(input("Introduzca sus apellidos: "))
-                                    email = str(input("Introduzca su email: "))
-                                    tarjeta = str(
-                                        input("Introduzca su tarjeta de credito, con guiones (0123-4567-8901-2345): "))
+                                    error = True
+                                    while error:
+                                        try:
+                                            nombre = str(input("Introduzca su nombre: "))
+                                            apellidos = str(input("Introduzca sus apellidos: "))
+                                            email = str(input("Introduzca su email: "))
+                                            error = False
+                                            tarjeta = str(
+                                                input("Introduzca su tarjeta de credito, con guiones (0123-4567-8901-2345): "))
+                                        except ValueError:
+                                            print("Error al leer")
                                     lectura_incorrecta = True
                                     while lectura_incorrecta:
                                         ImpresionesService().submenuA_FM()
-                                        tipo = str(abs(int(input("-> "))))
+                                        error = True
+                                        while error:
+                                            try:
+                                                tipo = str(abs(int(input("-> "))))
+                                                error = False
+                                            except ValueError:
+                                                print("Error al leer")
                                         if tipo in ["1", "2", "3"]:
                                             espacio_asignado = LogicaNegocio.encontrar_espacio_libre(
                                                 ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"))
@@ -397,7 +417,13 @@ while True:
                                                     matricula = Lectura.leer_matricula()
                                                     print("Ha introducido: " + matricula)
                                                     print("¿Es correcto?")
-                                                    lectura = str(input("1. Sí. *Otro*. No -> "))
+                                                    error = True
+                                                    while error:
+                                                        try:
+                                                            lectura = str(input("1. Sí. *Otro*. No -> "))
+                                                            error = False
+                                                        except ValueError:
+                                                            print("Error al leere")
                                                     if lectura == "1":
                                                         espacio_asignado.espacio_abonado = True
                                                         ServicioParking().edit_espacio(espacio_asignado)
@@ -433,19 +459,31 @@ while True:
                     numero_abono, abono = ServicioAbono.elegir_abono()
                     if abono is not None:
                         ImpresionesService().decision_edicion()
-                        decision = str(abs(int(input("-> "))))
+                        error = True
+                        while error:
+                            try:
+                                decision = str(abs(int(input("-> "))))
+                                error = False
+                            except ValueError:
+                                print("Error al leer")
                         if decision == "1":
                             print("El viejo DNI es" + abono.dni)
                             print("Configure el nuevo DNI")
                             dni = LogicaNegocio.lectura_dni()
                             print("Configure el nuevo nombre")
-                            nombre = str(input("Nuevo nombre: "))
-                            print("Configure los nuevos apellidos")
-                            apellidos = str(input("Nuevos apelldios: "))
-                            print("Configure el nuevo email")
-                            email = str(input("Nuevo email: "))
-                            print("Configure su tarjeta de credito, con guiones (0123-4567-7890-1234)")
-                            tarjeta = str(input("Nuevo numero de tarjeta: "))
+                            error = True
+                            while error:
+                                try:
+                                    nombre = str(input("Nuevo nombre: "))
+                                    print("Configure los nuevos apellidos")
+                                    apellidos = str(input("Nuevos apelldios: "))
+                                    print("Configure el nuevo email")
+                                    email = str(input("Nuevo email: "))
+                                    print("Configure su tarjeta de credito, con guiones (0123-4567-7890-1234)")
+                                    tarjeta = str(input("Nuevo numero de tarjeta: "))
+                                    error = False
+                                except ValueError:
+                                    print("Error al leer")
                             abono.dni = dni
                             abono.nombre = nombre
                             abono.apellidos = apellidos
@@ -465,7 +503,13 @@ while True:
                                 error = False
                                 try:
                                     ImpresionesService().tipo_mensualidad()
-                                    eleccion = str(abs(int(input("-> "))))
+                                    error = True
+                                    while error:
+                                        try:
+                                            eleccion = str(abs(int(input("-> "))))
+                                            error = False
+                                        except ValueError:
+                                            print("Error al leer")
                                     mensualidad = mensualidades.get(list(mensualidades.keys())[int(eleccion) - 1])
                                 except IndexError:
                                     print("Ha introducido un valor erroneo")
@@ -497,7 +541,13 @@ while True:
                         confirmacion = ""
                         while confirmacion != "0":
                             ImpresionesService().decision_baja_abono()
-                            confirmacion = str(abs(int(input("-> "))))
+                            error = True
+                            while error:
+                                try:
+                                    confirmacion = str(abs(int(input("-> "))))
+                                    error = False
+                                except ValueError:
+                                    print("Error al leer")
                             if confirmacion == "1":
                                 ServicioAbono.eliminar_abono_existente_por_index(idx)
                                 print("Abono borrado")
@@ -517,10 +567,13 @@ while True:
             loop = True
             while loop:
                 ImpresionesService().menu_caducidad_abono()
-                try:
-                    opcion = str(abs(int(input("-> "))))
-                except ValueError:
-                    opcion = ""
+                error = True
+                while error:
+                    try:
+                        opcion = str(abs(int(input("-> "))))
+                        error = False
+                    except ValueError:
+                        print("Error al leer")
                 if opcion == "0":
                     loop = False
                 if opcion == "1":
