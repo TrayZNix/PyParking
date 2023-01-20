@@ -4,6 +4,7 @@ from repositories.repo_cliente import RepoCliente
 class Lectura:
     @staticmethod
     def leer_pin(pin_desafio):
+        print(str(pin_desafio))
         while True:
             print("Introduzca el PIN de validación")
             pin = str(input("-> "))

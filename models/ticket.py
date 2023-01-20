@@ -20,7 +20,9 @@ class Ticket:
     def __str__(self):
         return "Matricula: " + self.__cliente.matricula + ". " + "Hora de entrada: " + str(
             self.__hora_entrada) + ".\nTarifa aplicada: Tarifa de " + str(self.__cliente.tipo_vehiculo).lower() + ". " \
-            + "Abonado: " + ("Sí." if self.__abonado else "No.") + (("Recaudado: "+str(self.__total_recaudado)+"€") if self.__abonado else "")
+            + "Abonado: " + ("Sí." if self.__abonado else "No.") + \
+            (("Recaudado: "+str(self.__total_recaudado)+"€") if self.__abonado else "") + \
+            "Plaza: "+str(self.__plaza)
 
     @property
     def hora_entrada(self):

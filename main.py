@@ -3,12 +3,9 @@ import math
 import os
 import pickle
 import random as r
-import sys
 import threading as thr
-
 import timedelta
 from timedelta import Timedelta
-
 from models.abono import Abono
 from models.cliente import Cliente
 from models.cobro import Cobro
@@ -18,10 +15,13 @@ from repositories.repo_cobro import RepoCobro
 from repositories.repo_parking import RepoParking
 from repositories.repo_ticket import RepoTicket
 from repositories.repo_cliente import RepoCliente
+from services.impresiones_service import ImpresionesService
 from services.logica_negocio import LogicaNegocio
 from services.servicio_abonos import ServicioAbono
 from services.servicio_lectura import Lectura
+from services.servicio_parking import ServicioParking
 
+# Variables
 tarifa_coche = 0.12
 tarifa_motocicleta = 0.08
 tarifa_vmr = 0.1
@@ -31,17 +31,26 @@ mensualidades = {
     "Semestral": {"Tiempo": Timedelta(days=182), "Precio": 130.00},
     "Anual": {"Tiempo": Timedelta(days=365), "Precio": 200.00}
 }
+opciones = {
+    "1": "Mensual",
+    "2": "Trimestral",
+    "3": "Semestral",
+    "4": "Anual"
+}
+
+
+# Fin de variables
 
 
 def autoguardado():
+    # Cada 5 minutos se ejecutará este codigo, que guardará el valor de las variables en el pickle correspondiente
+    RepoCliente.save_all(clientes)
     RepoParking.save_all(parking)
     RepoTicket.save_all(tickets)
-    thr.Timer(60.0, autoguardado).start()
+    RepoCobro.save_all(cobros)
+    thr.Timer(300.0, autoguardado).start()
 
 
-print("Bienvenido!")
-print("...................")
-print("")
 # import time
 # for x in range(2):
 #     print("Cargando.", end='')
@@ -54,7 +63,9 @@ print("")
 #     time.sleep(1)
 #     print("Cargando...", end="\r")
 # print("\r")
-os.system("cls")
+print("Bienvenido!")
+print("...................")
+print("")
 try:
     clientes = RepoCliente.find_all()
 except FileNotFoundError:
@@ -102,228 +113,199 @@ except FileNotFoundError:  # Si este no existe, crea un parking y lo guarda
     with open('parking.pkl', 'wb') as f:
         pickle.dump(parking, f)
 while True:
-    # autoguardado()
-    print("Elija su rol: ")
-    print("-------------------------------------------------------------------")
-    print("1. Cliente")
-    print("2. Administrador")
+    # autoguardado() #Activación del autoguardado
+    ImpresionesService().main_menu()
     try:
         lectura = str(abs(int(input("-> "))))
     except ValueError:
         lectura = "0"
     if lectura == "1":
         # os.system("cls")
-        print("__ __ __ __ __")
-        print("0. Salir")
-        print("1. Depositar vehiculo")
-        print("2. Retirar vehiculo")
-        print("3. Depositar abonados")
-        print("4. Retirar abonados")
-        lectura = str(abs(int(input("-> "))))
-        if lectura == "1":
-            parking = RepoParking.find_all()
-            espacios_libres = {"coches": 0, "motos": 0, "vrm": 0}
-            for fila in parking.espacios:
-                for espacio in fila:
-                    if espacio.ocupado:
-                        if espacio.tipo_parking == "Coche":
-                            espacios_libres["coches"] += 1
-                        elif espacio.tipo_parking == "Motocicleta":
-                            espacios_libres["motos"] += 1
-                        else:
-                            espacios_libres["vrm"] += 1
-            print("Espacios libres:")
-            print("........................")
-            print("Coches: " + str(espacios_libres.get("coches")))
-            print("Motos: " + str(espacios_libres.get("motos")))
-            print("VMR: " + str(espacios_libres.get("vrm")))
-            print("........................")
-            print("Introduzca su matrícula, o 0 para salir: ")
-            matricula = Lectura.leer_matricula()
-            if matricula is not None:
-                print("........................")
-                print("Elija según corresponda con su vehiculo:")
-                print("0. Salir")
-                print("1. Coche")
-                print("2. Motocicleta")
-                print("3. Cliente para personas con movilidad reducida (VMR)")
-                tipo = str(abs(int(input("-> "))))
-                if tipo == "0":
-                    print("")
-                elif tipo in ["1", "2", "3"]:
-                    cliente = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
-                    tipo = ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR")
-                    print("........................")
-                    espacio_asignado = LogicaNegocio.encontrar_espacio_libre(tipo)
-                    if espacio_asignado is not None:
-                        pin = r.randint(100000, 999999)
-                        tickets = []
-                        try:
-                            tickets = RepoTicket.find_all()
-                        except:
-                            RepoTicket.save_all(tickets)
-                        print("La plaza asignada para usted es la plaza: " + str(espacio_asignado.numero))
-                        espacio_asignado.ocupado = True
-                        RepoParking.edit_espacio(espacio_asignado)
-                        ticket = Ticket(cliente, pin, espacio_asignado.numero)
-                        tickets.append(ticket)
-                        RepoTicket.save_all(tickets)
-                        clientes = RepoCliente.find_all()
-                        clientes_normal = clientes.get("Cliente")
-                        clientes_normal.append(Cliente(tipo, matricula))
-                        clientes[Cliente] = clientes_normal
-                        RepoCliente.save_all(clientes)
-                        print("Su ticket:")
-                        print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-                        print(str(ticket))
-                        print("Su pin es: " + str(ticket.pin_validacion))
-                        print("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=")
-                        print("Recoja su ticket (Pulse enter)")
-                        input("-> ")
-                    else:
-                        print("No se te ha podido asignar un sitio")
-                else:
-                    print("Error al leer el tipo de coche")
+        ImpresionesService().submenu_a()
+        try:
+            lectura = str(abs(int(input("-> "))))
+        except ValueError:
+            print("Ha habido un error al leer")
             lectura = "0"
-
-        elif lectura == "2":
-            parking = RepoParking.find_all()
-            matricula = ""
-            while matricula != "0":
-                print("Escriba la matrícula del vehiculo, o 0 para salir: ")
-                matricula = str(input("-> ")).upper()
-                tickets = RepoTicket.find_all();
-                matricula_encontrada = False
-                for ticket in tickets:
-                    if ticket.cliente.matricula == matricula:
-                        ticketAPagar = ticket
-                        matricula_encontrada = True
-                if matricula_encontrada:
-                    plazaNoEncontrada = True
-                    plaza = ""
-                    while plaza != "0":
-                        print("Introduzca la plaza en la que se encuentra su vehiculo, o 0 para salir: ")
-                        plaza = str(input("-> "))
-                        if plaza != str(ticket.plaza):
-                            print("Plaza incorrecta!")
-                        elif plaza == str(ticket.plaza):
-                            pin_correcto = Lectura.leer_pin(ticket.pin_validacion)
-                            if pin_correcto & (plaza == str(ticket.plaza)):
-                                minutos = math.floor((datetime.datetime.now() - ticket.hora_entrada).seconds / 60)
-                                if ticket.cliente.tipo_vehiculo == "Coche":
-                                    if ticket.cliente.tipo_vehiculo == "Coche":
-                                        precio = parking.tarifa_coche
-                                    elif ticket.cliente.tipo_vehiculo == "Motocicleta":
-                                        precio = parking.tarifa_motocicleta
-                                    else:
-                                        precio = parking.tarifa_vrm
-                                        precio = float(precio)
-                                    plazaObj = RepoParking.espacio_por_numero(int(plaza))
-                                print("Ha estado " + str(minutos) + " minutos en el parking")
-                                print("A " + str(precio) + "€/minuto, debe un total de: " + str(
-                                    minutos * precio) + "€")
-                                sinRespuesta = True
-                                while sinRespuesta:
-                                    print("...................................")
-                                    print("Escriba su decisión")
-                                    print("0. Salir")
-                                    print("1. Pagar")
-                                    print("...................................")
-                                    decision = str(abs(int(input("-> "))))
-                                    if decision == "1":
-                                        sinRespuesta = False
-                                        ticket.abonado = True
-                                        RepoTicket.update_ticket(ticket)
-                                        plazaObj.ocupado = False
-                                        RepoParking.edit_espacio(plazaObj)
-                                        clientes = RepoCliente.find_all()
-                                        clientes_normal = clientes.get("Cliente")
-                                        indice = 0
-                                        for idx, c in enumerate(clientes_normal):
-                                            if c.matricula == matricula:
-                                                cliente = c
-                                                indice = idx
-                                        del clientes_normal[indice]
-                                        clientes["Cliente"] = clientes_normal
-                                        RepoCliente.save_all(clientes)
-                                        cobros.append(Cobro(cliente, (minutos * precio), False))
-                                        RepoCobro.save_all(cobros)
-                                        print("Muchas gracias! Buen viaje!")
-                                        pin, plaza, matricula = "0", "0", "0"
-                                    elif decision == "0":
-                                        sinRespuesta = False
-                                        pin = "0"
-                                    else:
-                                        print("Error al leer")
+        if lectura != "0":
+            if lectura == "1":
+                parking = RepoParking.find_all()
+                espacios_libres = {"coches": 0, "motos": 0, "vrm": 0}
+                for fila in parking.espacios:
+                    for espacio in fila:
+                        if espacio.ocupado:
+                            if espacio.tipo_parking == "Coche":
+                                espacios_libres["coches"] += 1
+                            elif espacio.tipo_parking == "Motocicleta":
+                                espacios_libres["motos"] += 1
                             else:
-                                pin = "0"
-                                plaza = "0"
+                                espacios_libres["vrm"] += 1
+                ImpresionesService().print_espacios_libres(
+                    espacios_libres)  # IMPRIME LOS ESPACIOS DISPONIBLES SEGUN EL TIPO DE VEHICULO
+                matricula = Lectura.leer_matricula()
+                if matricula is not None:
+                    ImpresionesService.submenuA_FM()
+                    tipo = str(abs(int(input("-> "))))
+                    if tipo == "0":
+                        print("")
+                    elif tipo in ["1", "2", "3"]:
+                        cliente = Cliente(("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"), matricula)
+                        tipo = ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR")
+                        print("........................")
+                        espacio_asignado = LogicaNegocio.encontrar_espacio_libre(tipo)
+                        if espacio_asignado is not None:
+                            tickets = RepoTicket.find_all()
+                            print("La plaza asignada para usted es la plaza: " + str(espacio_asignado.numero))
+                            espacio_asignado.ocupado = True
+                            ServicioParking.edit_espacio(espacio_asignado)
+                            ticket = Ticket(cliente, r.randint(100000, 999999), espacio_asignado.numero)
+                            tickets.append(ticket)
+                            RepoTicket.save_all(tickets)
+                            clientes = RepoCliente.find_all()
+                            clientes_normal = clientes.get("Cliente")
+                            clientes_normal.append(Cliente(tipo, matricula))
+                            clientes[Cliente] = clientes_normal
+                            RepoCliente.save_all(clientes)
+                            ImpresionesService().imprimir_ticket(ticket)
+                            input("-> ")
                         else:
-                            plaza = "0"
+                            print("No se te ha podido asignar un sitio")
+                    else:
+                        print("Error al leer el tipo de coche")
+                lectura = "0"
+
+            elif lectura == "2":
+                parking = RepoParking.find_all()
+                matricula = ""
+                while matricula != "0":
+                    print("Escriba la matrícula del vehiculo, o 0 para salir: ")
+                    matricula = str(input("-> ")).upper()
+                    tickets = RepoTicket.find_all();
+                    matricula_encontrada = False
+                    for ticket in tickets:
+                        if ticket.cliente.matricula == matricula:
+                            ticketAPagar = ticket
+                            matricula_encontrada = True
+                    if matricula_encontrada:
+                        plazaNoEncontrada = True
+                        plaza = ""
+                        while plaza != "0":
+                            print("Introduzca la plaza en la que se encuentra su vehiculo, o 0 para salir: ")
+                            plaza = str(input("-> "))
+                            if plaza != str(ticketAPagar.plaza):
+                                print("Plaza incorrecta!")
+                            elif plaza == str(ticketAPagar.plaza):
+                                pin_correcto = Lectura.leer_pin(ticketAPagar.pin_validacion)
+                                if pin_correcto & (plaza == str(ticketAPagar.plaza)):
+                                    minutos = math.floor((datetime.datetime.now() - ticketAPagar.hora_entrada).seconds / 60)
+                                    if ticketAPagar.cliente.tipo_vehiculo == "Coche":
+                                        if ticketAPagar.cliente.tipo_vehiculo == "Coche":
+                                            precio = parking.tarifa_coche
+                                        elif ticketAPagar.cliente.tipo_vehiculo == "Motocicleta":
+                                            precio = parking.tarifa_motocicleta
+                                        else:
+                                            precio = parking.tarifa_vrm
+                                            precio = float(precio)
+                                        plazaObj = ServicioParking().espacio_por_numero(int(plaza))
+                                    print("Ha estado " + str(minutos) + " minutos en el parking")
+                                    print("A " + str(precio) + "€/minuto, debe un total de: " + str(
+                                        minutos * precio) + "€")
+                                    sinRespuesta = True
+                                    while sinRespuesta:
+                                        ImpresionesService().decision_pago()
+                                        decision = str(abs(int(input("-> "))))
+                                        if decision == "1":
+                                            sinRespuesta = False
+                                            ticketAPagar.abonado = True
+                                            RepoTicket.update_ticket(ticketAPagar)
+                                            plazaObj.ocupado = False
+                                            ServicioParking.edit_espacio(plazaObj)
+                                            clientes = RepoCliente.find_all()
+                                            clientes_normal = clientes.get("Cliente")
+                                            indice = 0
+                                            for idx, c in enumerate(clientes_normal):
+                                                if c.matricula == matricula:
+                                                    cliente = c
+                                                    indice = idx
+                                            del clientes_normal[indice]
+                                            clientes["Cliente"] = clientes_normal
+                                            RepoCliente.save_all(clientes)
+                                            cobros.append(Cobro(cliente, (minutos * precio), False))
+                                            RepoCobro.save_all(cobros)
+                                            print("Muchas gracias! Buen viaje!")
+                                            pin, plaza, matricula = "0", "0", "0"
+                                        elif decision == "0":
+                                            sinRespuesta = False
+                                            pin = "0"
+                                        else:
+                                            print("Error al leer")
+                                else:
+                                    pin = "0"
+                                    plaza = "0"
+                            else:
+                                plaza = "0"
+                    else:
+                        matricula = "0"
+                        print("No se ha encontrado la matricula")
+                lectura = "0"
+            elif lectura == "3":
+                print("Introduzca su matrícula: ")
+                matricula = str(input("-> ")).upper()
+                dni = LogicaNegocio.lectura_dni()
+                abonado = ServicioAbono.encontrar_abono_por_dni(dni)
+                if abonado is not None:
+                    desafio = Lectura.leer_pin(abonado.pin_abono)
+                    if desafio:
+                        espacio = ServicioParking().espacio_por_numero(abonado.numero_plaza)
+                        espacio.ocupado = True
+                        ServicioParking.edit_espacio(espacio)
+                        print("¡Bienvenido al parking!")
                 else:
-                    matricula = "0"
-                    print("No se ha encontrado la matricula")
-            lectura = "0"
-        elif lectura == "3":
-            print("Introduzca su matrícula: ")
-            matricula = str(input("-> ")).upper()
-            dni = LogicaNegocio.lectura_dni()
-            abonado = ServicioAbono.encontrar_abono_por_dni(dni, matricula)
-            if abonado is not None:
-                desafio = Lectura.leer_pin(abonado.pin_abono)
-                if desafio:
-                    espacio = RepoParking.espacio_por_numero(abonado.numero_plaza)
-                    espacio.ocupado = True
-                    RepoParking.edit_espacio(espacio)
-                    print("¡Bienvenido al parking!")
-            else:
-                print("No se ha encontrado ningun abono con los datos introducidos anteriormente")
-        elif lectura == "4":
-            print("Introduzca la matrícula de su vehiculo: ")
-            matricula = str(input("-> "))
-            dni = LogicaNegocio.lectura_dni()
-            if dni is not None:
-                abono = ServicioAbono.encontrar_abono_por_dni(dni, matricula)
-                error = True
-                while error:
-                    try:
-                        print("Introduzca la plaza en la que se encuentra su vehiculo: ")
-                        numero = int(input("-> "))
-                        espacio = RepoParking.espacio_por_numero(numero)
-                        print(str(espacio))
-                    except ValueError:
-                        print("Ha introducido un valor erroneo")
-                    except IndexError:
-                        print("Ese sitio no existe")
-                    if espacio is not None:
-                        error = False
-                        print("Introduzca el pin desafio: ")
-                        desafio = Lectura.leer_pin(abono.pin_abono)
-                        if desafio:
-                            espacio.ocupado = False
-                            RepoParking.edit_espacio(espacio)
-                            print("¡Hasta pronto!")
+                    print("No se ha encontrado ningun abono con los datos introducidos anteriormente")
+            elif lectura == "4":
+                print("Introduzca la matrícula de su vehiculo: ")
+                matricula = str(input("-> "))
+                dni = LogicaNegocio.lectura_dni()
+                if dni is not None:
+                    abono = ServicioAbono.encontrar_abono_por_dni(dni)
+                    error = True
+                    while error:
+                        try:
+                            print("Introduzca la plaza en la que se encuentra su vehiculo: ")
+                            numero = int(input("-> "))
+                            espacio = ServicioParking().espacio_por_numero(numero)
+                        except ValueError:
+                            print("Ha introducido un valor erroneo")
+                        except IndexError:
+                            print("Ese sitio no existe")
+                        if espacio is not None:
+                            error = False
+                            print("Introduzca el pin desafio: ")
+                            desafio = Lectura.leer_pin(abono.pin_abono)
+                            if desafio:
+                                espacio.ocupado = False
+                                ServicioParking.edit_espacio(espacio)
+                                print("¡Hasta pronto!")
         elif lectura == "0":
             print("")
         else:
             print("Error al leer")
 
     elif lectura == "2":
-        print("__ __ __ __ __")
-        print("0. Atras")
-        print("1. Estado del parking")
-        print("2. Facturación")
-        print("3. Consulta de abonados")
-        print("4. Abonos")
-        print("5. Caducidad de abonos")
-        print("6. Ver todos los tickets")
-        lectura = str(abs(int(input("-> "))))
+        ImpresionesService.submenu_b()
+        try:
+            lectura = "0"
+            lectura = str(abs(int(input("-> "))))
+        except ValueError:
+            print("Error de lectura")
         print()
         if lectura == "0":
             pass
         elif lectura == "1":
             parking = RepoParking.find_all()
+            os.system("cls")
             print(parking.verParking())
+            input("Pulsa enter para continuar ->")
         elif lectura == "2":
             loop = True
             while loop:
@@ -347,10 +329,8 @@ while True:
                             total_recaudado = 0.0
                             if len(cobros_en_fecha) != 0:
                                 for cobro in cobros_en_fecha:
-                                    print("-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.")
-                                    print(str(cobro))
+                                    ImpresionesService().imprimir_cobro(cobro)
                                     total_recaudado += cobro.cantidad_euros
-                                print("-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.")
                                 print("Total recaudado entre las fechas introducidas:")
                                 print("{:.2f}".format(total_recaudado) + "€")
                             else:
@@ -369,105 +349,108 @@ while True:
             for cobro in cobros:
                 total_recaudado += cobro.cantidad_euros
                 if ServicioAbono.checkear_abono_activo(cobro.cliente.dni):
-                    print("->> ---------------------------------")
-                    print(str(cobro))
-                    print("-------------------------------------")
+                    ImpresionesService().imprimir_cobro(cobro)
                 else:
                     cobros_abonos_no_activos.append(cobro)
             if len(cobros_abonos_no_activos) != 0:
                 print(" ================== Los siguientes cobros son de abonos que están dados de baja:")
                 for cobro in cobros_abonos_no_activos:
-                    print("->> ---------------------------------")
-                    print(str(cobro))
-                    print("-------------------------------------")
+                    ImpresionesService().imprimir_cobro(cobro)
             print("Se ha recaudado un total de: " + str(total_recaudado) + "€")
         elif lectura == "4":
             loop = True;
             while loop:
                 opcion = ""
-                print("........................")
-                print("0. Salir")
-                print("1. Dar de alta")
-                print("2. Modificar abono")
-                print("3. Dar de baja")
-                print("........................")
-                print("Elija una opcion:")
-                opcion = str(abs(int(input("-> "))))
+                ImpresionesService().submenu_b_p4()
+                try:
+                    opcion = "0"
+                    opcion = str(abs(int(input("-> "))))
+                except ValueError:
+                    print("Error al leer")
                 if opcion == "0":
+
                     loop = False
                 elif opcion == "1":
                     while loop:
-                        print("........................")
-                        print("0. Salir")
-                        print("1. Mensual")
-                        print("2. Trimestal")
-                        print("3. Semestral")
-                        print("4. Anual")
-                        print("........................")
-                        print("Elija una opcion:")
-                        opcion = str(abs(int(input("-> "))))
+                        ImpresionesService().tipo_mensualidad()
+                        try:
+                            opcion = "0"
+                            opcion = str(abs(int(input("-> "))))
+                        except ValueError:
+                            print("Error al leer")
                         if opcion == "0":
                             loop = False
                         elif opcion in ["1", "2", "3", "4"]:
-                            nombre = str(input("Introduzca su nombre: "))
-                            apellidos = str(input("Introduzca sus apellidos: "))
-                            email = str(input("Introduzca su email: "))
-                            tarjeta = str(input("Introduzca su tarjeta de credito, con guiones (0123-4567-8901-2345): "))
-                            dni = LogicaNegocio.lectura_dni()
-                            if dni is not None:
-                                lectura_incorrecta = True
-                                while lectura_incorrecta:
-                                    print("........................")
-                                    print("Elija según corresponda con su vehiculo:")
-                                    print("0. Salir")
-                                    print("1. Coche")
-                                    print("2. Motocicleta")
-                                    print("3. Cliente para personas con movilidad reducida (VMR)")
-                                    tipo = str(abs(int(input("-> "))))
-                                    if tipo in ["1", "2", "3"]:
-                                        espacio_asignado = LogicaNegocio.encontrar_espacio_libre(
-                                            ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"))
-                                        if espacio_asignado is not None:
-                                            while lectura_incorrecta:
-                                                print("Introduzca la matrícula de su vehiculo")
-                                                matricula = Lectura.leer_matricula()
-                                                print("Ha introducido: " + matricula)
-                                                print("¿Es correcto?")
-                                                lectura = str(input("1. Sí. *Otro*. No -> "))
-                                                if lectura == "1":
-                                                    espacio_asignado.espacio_abonado = True
-                                                    RepoParking.edit_espacio(espacio_asignado)
-                                                    opciones = {
-                                                        "1": "Mensual",
-                                                        "2": "Trimestral",
-                                                        "3": "Semestral",
-                                                        "4": "Anual"
-                                                    }
-                                                    mensualidad_elegida = opciones.get(opcion)
-                                                    mensualidad = mensualidades.get(mensualidad_elegida)
-                                                    abonado = Abono(nombre, apellidos, email, tarjeta, dni,
-                                                                    mensualidad_elegida, mensualidad.get("Tiempo"),
-                                                                    espacio_asignado.numero,
-                                                                    ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"),
-                                                                    matricula, r.randint(100000, 999999))
-                                                    cobros = RepoCobro.find_all()
-                                                    cobros.append(Cobro(abonado, mensualidad.get("Precio"), True))
-                                                    RepoCobro.save_all(cobros)
-                                                    print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
-                                                    print(str(abonado))
-                                                    print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
-                                                    clientes = RepoCliente.find_all()
-                                                    clientes.get("Abonado").append(abonado)
-                                                    RepoCliente.save_all(clientes)
-                                                    print("Se ha registrado como abonado. Gracias por su compra")
-                                                    lectura_incorrecta = False
-                                                    loop = False
+                            while loop:
+                                dni = LogicaNegocio.lectura_dni()
+                                abono = ServicioAbono.encontrar_abono_por_dni(dni)
+                                if abono is not None:
+                                    print("El DNI introducido ya está asociado a un abono")
+                                if dni is not None and abono is None:
+                                    error = True
+                                    while error:
+                                        try:
+                                            nombre = str(input("Introduzca su nombre: "))
+                                            apellidos = str(input("Introduzca sus apellidos: "))
+                                            email = str(input("Introduzca su email: "))
+                                            error = False
+                                            tarjeta = str(
+                                                input("Introduzca su tarjeta de credito, con guiones (0123-4567-8901-2345): "))
+                                        except ValueError:
+                                            print("Error al leer")
+                                    lectura_incorrecta = True
+                                    while lectura_incorrecta:
+                                        ImpresionesService().submenuA_FM()
+                                        error = True
+                                        while error:
+                                            try:
+                                                tipo = str(abs(int(input("-> "))))
+                                                error = False
+                                            except ValueError:
+                                                print("Error al leer")
+                                        if tipo in ["1", "2", "3"]:
+                                            espacio_asignado = LogicaNegocio.encontrar_espacio_libre(
+                                                ("Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"))
+                                            if espacio_asignado is not None:
+                                                while lectura_incorrecta:
+                                                    print("Introduzca la matrícula de su vehiculo")
+                                                    matricula = Lectura.leer_matricula()
+                                                    print("Ha introducido: " + matricula)
+                                                    print("¿Es correcto?")
+                                                    error = True
+                                                    while error:
+                                                        try:
+                                                            lectura = str(input("1. Sí. *Otro*. No -> "))
+                                                            error = False
+                                                        except ValueError:
+                                                            print("Error al leere")
+                                                    if lectura == "1":
+                                                        espacio_asignado.espacio_abonado = True
+                                                        ServicioParking().edit_espacio(espacio_asignado)
+                                                        mensualidad_elegida = opciones.get(opcion)
+                                                        mensualidad = mensualidades.get(mensualidad_elegida)
+                                                        abonado = Abono(nombre, apellidos, email, tarjeta, dni,
+                                                                        mensualidad_elegida, mensualidad.get("Tiempo"),
+                                                                        espacio_asignado.numero,
+                                                                        (
+                                                                            "Coche" if tipo == "1" else "Motocicleta" if tipo == "2" else "VMR"),
+                                                                        matricula, r.randint(100000, 999999))
+                                                        cobros = RepoCobro.find_all()
+                                                        cobros.append(Cobro(abonado, mensualidad.get("Precio"), True))
+                                                        RepoCobro.save_all(cobros)
+                                                        ImpresionesService.imprimir_abonado(abonado)
+                                                        clientes = RepoCliente.find_all()
+                                                        clientes.get("Abonado").append(abonado)
+                                                        RepoCliente.save_all(clientes)
+                                                        print("Se ha registrado como abonado. Gracias por su compra")
+                                                        lectura_incorrecta = False
+                                                        loop = False
+                                            else:
+                                                print("No se ha encontrado un sitio libre que asignar")
+                                        elif tipo == "0":
+                                            lectura_incorrecta = False
                                         else:
-                                            print("No se ha encontrado un sitio libre que asignar")
-                                    elif tipo == "0":
-                                        lectura_incorrecta = False
-                                    else:
-                                        print("Error al leer")
+                                            print("Error al leer")
 
                         else:
                             print("Error al leer")
@@ -475,23 +458,32 @@ while True:
                 elif opcion == "2":
                     numero_abono, abono = ServicioAbono.elegir_abono()
                     if abono is not None:
-                        print("¿Qué desea editar del abono?")
-                        print("0. Salir")
-                        print("1. Datos del cliente")
-                        print("2. Fecha de fin del abono")
-                        decision = str(abs(int(input("-> "))))
+                        ImpresionesService().decision_edicion()
+                        error = True
+                        while error:
+                            try:
+                                decision = str(abs(int(input("-> "))))
+                                error = False
+                            except ValueError:
+                                print("Error al leer")
                         if decision == "1":
                             print("El viejo DNI es" + abono.dni)
                             print("Configure el nuevo DNI")
                             dni = LogicaNegocio.lectura_dni()
                             print("Configure el nuevo nombre")
-                            nombre = str(input("Nuevo nombre: "))
-                            print("Configure los nuevos apellidos")
-                            apellidos = str(input("Nuevos apelldios: "))
-                            print("Configure el nuevo email")
-                            email = str(input("Nuevo email: "))
-                            print("Configure su tarjeta de credito, con guiones (0123-4567-7890-1234)")
-                            tarjeta = str(input("Nuevo numero de tarjeta: "))
+                            error = True
+                            while error:
+                                try:
+                                    nombre = str(input("Nuevo nombre: "))
+                                    print("Configure los nuevos apellidos")
+                                    apellidos = str(input("Nuevos apelldios: "))
+                                    print("Configure el nuevo email")
+                                    email = str(input("Nuevo email: "))
+                                    print("Configure su tarjeta de credito, con guiones (0123-4567-7890-1234)")
+                                    tarjeta = str(input("Nuevo numero de tarjeta: "))
+                                    error = False
+                                except ValueError:
+                                    print("Error al leer")
                             abono.dni = dni
                             abono.nombre = nombre
                             abono.apellidos = apellidos
@@ -506,27 +498,29 @@ while True:
                             loop_abono = False
                         elif decision == "2":
                             print("Respecto al día de hoy, renueva el abono con la mensualidad deseada:")
-                            opciones = {
-                                "1": "Mensual",
-                                "2": "Trimestral",
-                                "3": "Semestral",
-                                "4": "Anual"
-                            }
                             eleccion_mensualidad = True
                             while eleccion_mensualidad:
+                                error = False
                                 try:
-                                    print("0. Salir")
-                                    for idx, mensualidad in enumerate(mensualidades.keys()):
-                                        print(str(idx + 1)+". "+mensualidad)
-                                    eleccion = str(abs(int(input("-> "))))
+                                    ImpresionesService().tipo_mensualidad()
+                                    error = True
+                                    while error:
+                                        try:
+                                            eleccion = str(abs(int(input("-> "))))
+                                            error = False
+                                        except ValueError:
+                                            print("Error al leer")
                                     mensualidad = mensualidades.get(list(mensualidades.keys())[int(eleccion) - 1])
+                                except IndexError:
+                                    print("Ha introducido un valor erroneo")
+                                    error = True
+                                if not error:
                                     abono.fecha_fin = datetime.datetime.now() + mensualidad.get("Tiempo")
                                     cobros = RepoCobro.find_all()
                                     cobros.append(Cobro(abono, mensualidad.get("Precio"), True))
                                     RepoCobro.save_all(cobros)
-                                    print("Se ha actualizado el abono: -- -- -- -- -- -- -- -- -- --")
-                                    print(str(abono))
-                                    print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
+                                    print("Se ha actualizado el abono: ")
+                                    ImpresionesService.imprimir_abonado(abono)
                                     clientes = RepoCliente.find_all()
                                     abonados = clientes.get("Abonado")
                                     abonados[numero_abono] = abono
@@ -534,8 +528,6 @@ while True:
                                     RepoCliente.save_all(clientes)
                                     eleccion_mensualidad = False
                                     loop_abono = False
-                                except IndexError:
-                                    print("Ha introducido un valor erroneo")
                         elif decision == "0":
                             pass
                         else:
@@ -544,14 +536,18 @@ while True:
                 elif opcion == "3":
                     idx, abono = ServicioAbono.elegir_abono()
                     if abono is not None:
+                        print(idx)
+                        print(abono)
                         confirmacion = ""
                         while confirmacion != "0":
-                            print("-----------------------")
-                            print("Dar de baja eliminará su reserva y vaciará el espacio")
-                            print("¿Seguro quiere dar de baja este abono?")
-                            print("0. No")
-                            print("1. Sí")
-                            confirmacion = str(abs(int(input("-> "))))
+                            ImpresionesService().decision_baja_abono()
+                            error = True
+                            while error:
+                                try:
+                                    confirmacion = str(abs(int(input("-> "))))
+                                    error = False
+                                except ValueError:
+                                    print("Error al leer")
                             if confirmacion == "1":
                                 ServicioAbono.eliminar_abono_existente_por_index(idx)
                                 print("Abono borrado")
@@ -568,23 +564,20 @@ while True:
             pass
         elif lectura == "5":
             opcion = ""
-            while opcion == "":
-                print("Comprobar que abonos van a caducar: ----")
-                print("0. Salir")
-                print("1. Por mes")
-                print("2. Proximos diez dias")
-                print("----------------------------------")
-                try:
-                    opcion = str(abs(int(input("-> "))))
-                except ValueError:
-                    opcion = ""
+            loop = True
+            while loop:
+                ImpresionesService().menu_caducidad_abono()
+                error = True
+                while error:
+                    try:
+                        opcion = str(abs(int(input("-> "))))
+                        error = False
+                    except ValueError:
+                        print("Error al leer")
+                if opcion == "0":
+                    loop = False
                 if opcion == "1":
-                    print("Elija el mes a consultar: ---------------------------")
-                    print("0. Salir")
-                    print("1. Enero.  2. Febrero.  3. Marzo.  4. Abril.")
-                    print("5. Mayo.  6. Junio.  7. Julio.  8. Agosto.")
-                    print("9. Septiembre.  10. Octubre.  11. Noviembre.  12. Diciembre.")
-                    print("-------------------------")
+                    ImpresionesService().meses()
                     try:
                         opcion = str(abs(int(input("-> "))))
                     except ValueError:
@@ -600,9 +593,7 @@ while True:
                         else:
                             print("Los siguientes abonos caducan en el mes elegido: ")
                             for abono in abonos_del_mes_elegido:
-                                print("-- -- -- -- -- -- -- -- -- -- -- -- -- ")
-                                print(str(abono))
-                            print("-- -- -- -- -- -- -- -- -- -- -- -- -- ")
+                                ImpresionesService.imprimir_abonado(abono)
 
                 elif opcion == "2":
                     abonados = RepoCliente.find_all().get("Abonado")
@@ -615,9 +606,7 @@ while True:
                     else:
                         print("Los próximos abonos caducarán en los próximos 10 dias")
                         for abono in abonos_prox_diez_dias:
-                            print("-- -- -- -- -- -- -- -- -- -- -- -- -- ")
-                            print(str(abono))
-                        print("-- -- -- -- -- -- -- -- -- -- -- -- -- ")
+                            ImpresionesService.imprimir_abonado(abono)
                 else:
                     print("Error al leer")
     else:

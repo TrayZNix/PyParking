@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class Espacio:
     __numero = 0
     __ocupado = False
