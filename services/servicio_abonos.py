@@ -21,7 +21,7 @@ class ServicioAbono:
                 print("¿Qué abono desea editar? (Escriba 0 para volver atras)")
                 try:
                     numero_abono = abs(int(input("-> ")))
-                    indice = numero_abono - 1
+                    print(str(numero_abono))
                 except ValueError:
                     # print("Error de lectura")
                     numero_abono = None
@@ -29,8 +29,11 @@ class ServicioAbono:
                 if numero_abono == "0":
                     return None, None
                 elif numero_abono is not None:
+                    indice = numero_abono - 1
+                    if indice < 0:
+                        return 0, None
                     try:
-                        abono = abonos[numero_abono - 1]
+                        abono = abonos[indice]
                         print("Ha elegido el siguiente abono: ")
                         print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --")
                         print(str(abono))

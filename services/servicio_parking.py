@@ -9,7 +9,11 @@ class ServicioParking:
         for idx, fila in enumerate(parking.espacios):
             for sub_idx, espacio in enumerate(fila):
                 if espacio.numero == espacio_editado.numero:
-                    parking.espacios[idx][sub_idx] = espacio_editado
+                    indice, subindice = idx, sub_idx
+        try:
+            parking.espacios[indice][subidx] = espacio_editado
+        except:
+            pass
         RepoParking.save_all(parking)
 
     @staticmethod
