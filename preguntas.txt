@@ -1,0 +1,5 @@
+os.system("cls") bien o mal?¿?
+
+Inicializo el parking 100% vacío? o dejo algunos ocupados aunque no tengan vehiculo realmente?
+
+Hago "maindementira"?
