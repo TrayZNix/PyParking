@@ -55,10 +55,10 @@ class ServicioAbono:
         RepoCliente.save_all(clientes)
 
     @staticmethod
-    def encontrar_abono_por_dni(dni, matricula):
+    def encontrar_abono_por_dni(dni):
         abonados = RepoCliente.find_all().get("Abonado")
         for abonado in abonados:
-            if (abonado.dni == dni) & (abonado.matricula == matricula):
+            if abonado.dni == dni:
                 return abonado
         return None
 

@@ -4,16 +4,12 @@ from repositories.repo_parking import RepoParking
 
 class ServicioParking:
     @staticmethod
-    def edit_espacio(espacio_editado: Espacio):
+    def edit_espacio(espacio_editado):
         parking = RepoParking.find_all()
         for idx, fila in enumerate(parking.espacios):
             for sub_idx, espacio in enumerate(fila):
                 if espacio.numero == espacio_editado.numero:
-                    indice, subindice = idx, sub_idx
-        try:
-            parking.espacios[indice][subidx] = espacio_editado
-        except:
-            pass
+                    parking.espacios[idx][sub_idx] = espacio_editado
         RepoParking.save_all(parking)
 
     @staticmethod
