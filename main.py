@@ -199,14 +199,13 @@ while True:
                                 if pin_correcto & (plaza == str(ticketAPagar.plaza)):
                                     minutos = math.floor((datetime.datetime.now() - ticketAPagar.hora_entrada).seconds / 60)
                                     if ticketAPagar.cliente.tipo_vehiculo == "Coche":
-                                        if ticketAPagar.cliente.tipo_vehiculo == "Coche":
-                                            precio = parking.tarifa_coche
-                                        elif ticketAPagar.cliente.tipo_vehiculo == "Motocicleta":
-                                            precio = parking.tarifa_motocicleta
-                                        else:
-                                            precio = parking.tarifa_vrm
-                                            precio = float(precio)
-                                        plazaObj = ServicioParking().espacio_por_numero(int(plaza))
+                                        precio = parking.tarifa_coche
+                                    elif ticketAPagar.cliente.tipo_vehiculo == "Motocicleta":
+                                        precio = parking.tarifa_motocicleta
+                                    else:
+                                        precio = parking.tarifa_vrm
+                                        precio = float(precio)
+                                    plazaObj = ServicioParking().espacio_por_numero(int(plaza))
                                     print("Ha estado " + str(minutos) + " minutos en el parking")
                                     print("A " + str(precio) + "€/minuto, debe un total de: " + str(
                                         minutos * precio) + "€")
